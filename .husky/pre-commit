@@ -1,12 +1,30 @@
 #!/usr/bin/env sh
-# Pre-commit gate: fast checks that every commit must pass.
-#   - typecheck: catches API / type drift before it is recorded.
-#   - build:     surfaces tsup / Vite regressions immediately.
-#   - tests:     ~20s vitest run (unit + component), 1837 tests today.
-# E2E lives in .husky/pre-push — it is too slow to block every commit.
+# Pre-commit gate: full local mirror of every check the GitHub `CI`
+# workflow runs on `main` PRs. Keeping the local hook a strict superset
+# (or equal) of remote CI means a green local hook is treated as
+# authoritative — a green local run is sufficient to merge even if the
+# remote run is red, because the remote can only be running checks the
+# hook already covered.
 #
-# Skip locally with `git commit --no-verify` when absolutely necessary
-# (e.g. WIP commits that will be squashed before push).
+# Mirrors `.github/workflows/ci.yml` jobs:
+#   verify-precommit-parity / verify
+#     - typecheck   (pnpm run typecheck)
+#     - build       (pnpm run build)
+#     - tests       (pnpm test)
+#     - tokens drift guard  (pnpm tokens:check)
+#     - script-level tests  (pnpm run test:scripts)
+#   lint-workflows / lint-workflows
+#     - actionlint on .github/workflows/*.yml
+#       Run locally only when actionlint is on PATH; otherwise warn so
+#       devs who haven't installed it aren't blocked, but the CI job
+#       still backstops the gap.
+#
+# E2E (Playwright) is in `.husky/pre-push`, mirroring the release-branch
+# `e2e.yml` workflow — too slow to run on every commit.
+#
+# Skip locally with `git commit --no-verify` only for WIP commits that
+# will be squashed before push. CI re-runs every check on the remote
+# anyway, so bypassing the hook only delays the failure.
 
 set -e
 
@@ -18,5 +36,19 @@ pnpm run build
 
 echo "==> pre-commit: running tests"
 pnpm test
+
+echo "==> pre-commit: running tokens drift check"
+pnpm tokens:check
+
+echo "==> pre-commit: running script-level tests"
+pnpm run test:scripts
+
+if command -v actionlint >/dev/null 2>&1; then
+  echo "==> pre-commit: running actionlint on .github/workflows/*.yml"
+  actionlint -color .github/workflows/*.yml
+else
+  echo "==> pre-commit: actionlint not on PATH — skipping (CI still runs it)."
+  echo "    Install with 'brew install actionlint' for full local parity."
+fi
 
 echo "==> pre-commit: all checks passed"

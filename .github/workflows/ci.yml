@@ -6,11 +6,22 @@ on:
   pull_request:
     branches: [ main ]
 
-# The `verify-precommit-parity` job below runs EXACTLY what the local
-# pre-commit hook at `.husky/pre-commit` runs (typecheck + build +
-# vitest). This makes `git commit --no-verify` useless in practice: CI
-# re-runs the same three checks on every PR and every push to protected
-# branches, so bypassing the hook only delays the failure.
+# Full parity contract with `.husky/pre-commit`: every step in the
+# `verify-precommit-parity` job below has a matching local step in the
+# pre-commit hook, AND every step the hook runs is reflected here. The
+# `lint-workflows` job is similarly mirrored locally as a conditional
+# actionlint step in the hook (skipped only when the binary is not on
+# PATH; the CI job is the unconditional backstop).
+#
+# Why full parity matters: a green local hook is treated as
+# authoritative — sufficient to merge even when the remote run is red —
+# because parity guarantees the remote can only be running checks the
+# hook already covered. If you add a check here, ALSO add it to the
+# hook. If you add a check to the hook, ALSO add it here.
+#
+# This makes `git commit --no-verify` useless in practice: CI re-runs
+# the same checks on every PR and every push to protected branches, so
+# bypassing the hook only delays the failure.
 #
 # The job is intended to be a REQUIRED status check in branch protection
 # rules for `main`. Configure that via the GitHub repo settings:
@@ -23,13 +34,16 @@ on:
 # PRs rely on the `.husky/pre-push` hook for local E2E coverage, which
 # keeps merge latency low while still guarding the release cut.
 #
-# Additional guards in the same job:
-#   * `pnpm tokens:check` — fails if `packages/react/src/styles/tokens/`
+# Steps in this job:
+#   * `pnpm run typecheck`  — TypeScript build-mode check across packages.
+#   * `pnpm run build`      — tsup / Vite per-package build.
+#   * `pnpm test`           — vitest unit + component suites.
+#   * `pnpm tokens:check`   — fails if `packages/react/src/styles/tokens/`
 #     has drifted from the SHA-256 `contentHash` recorded in
 #     `manifest.json`. Developers who forget `pnpm sync:tokens` get a red
 #     PR instead of stale palettes shipping silently.
-#   * `pnpm test:scripts` — exercises the script-level tests (Node's
-#     built-in test runner) that cover the sync-tokens CLI surface.
+#   * `pnpm run test:scripts` — script-level tests (Node's built-in test
+#     runner) covering the sync-tokens CLI surface.
 jobs:
   verify-precommit-parity:
     name: verify

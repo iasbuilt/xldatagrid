@@ -10,8 +10,8 @@
  *      `null` outright.
  */
 import { describe, it, expect } from 'vitest';
-import type { FilterDescriptor, CompositeFilterDescriptor } from '@istracked/datagrid-core';
-import { stripField, MAX_FILTER_DEPTH } from '@istracked/datagrid-core';
+import type { FilterDescriptor, CompositeFilterDescriptor } from '@iasbuilt/datagrid-core';
+import { stripField, MAX_FILTER_DEPTH } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

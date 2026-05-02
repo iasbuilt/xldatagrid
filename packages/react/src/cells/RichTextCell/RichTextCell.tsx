@@ -31,7 +31,7 @@ import React, {
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import * as styles from './RichTextCell.styles';
 
 /**

@@ -6,7 +6,7 @@
  *
  * @packageDocumentation
  */
-import { ExtensionDefinition, CellAddress, GridEvent } from '@istracked/datagrid-core';
+import { ExtensionDefinition, CellAddress, GridEvent } from '@iasbuilt/datagrid-core';
 
 /**
  * Represents a single comment within a {@link CommentThread}.

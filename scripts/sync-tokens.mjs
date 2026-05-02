@@ -2,7 +2,7 @@
 /**
  * sync-tokens.mjs
  *
- * Ingests design tokens from the `istracked/tokens` repository into the
+ * Ingests design tokens from the `iasbuilt/tokens` repository into the
  * xldatagrid source tree. The tokens repository is the organisation-wide
  * source of truth for the iAsBuilt palette; this script copies the
  * already-built distribution artefacts (JSON + CSS) into
@@ -89,7 +89,7 @@ function resolveTokensDir() {
   const sibling = resolve(repoRoot, '..', 'tokens');
   if (existsSync(sibling)) return sibling;
   fail(
-    `Unable to locate the istracked/tokens repository. Checked the sibling directory ${sibling}. ` +
+    `Unable to locate the iasbuilt/tokens repository. Checked the sibling directory ${sibling}. ` +
       `Set ISTRACKED_TOKENS_DIR to its absolute path and retry.`,
   );
   return ''; // unreachable — fail() exits the process

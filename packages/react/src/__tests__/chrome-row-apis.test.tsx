@@ -16,7 +16,7 @@
  */
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
-import type { RowBorderStyle, ChromeCellContent } from '@istracked/datagrid-core';
+import type { RowBorderStyle, ChromeCellContent } from '@iasbuilt/datagrid-core';
 import { vi } from 'vitest';
 
 type TestRow = { id: string; name: string; category: 'alpha' | 'beta' | 'gamma' };

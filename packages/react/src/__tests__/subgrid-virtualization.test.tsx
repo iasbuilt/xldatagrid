@@ -18,7 +18,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
 import { cellRendererMap } from '../cells';
-import { ColumnDef } from '@istracked/datagrid-core';
+import { ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Fixtures

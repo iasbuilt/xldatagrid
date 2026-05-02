@@ -1,4 +1,4 @@
-import type { ColumnDef, StatusOption } from '@istracked/datagrid-core';
+import type { ColumnDef, StatusOption } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared demo data used across stories

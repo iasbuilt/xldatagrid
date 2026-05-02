@@ -9,8 +9,8 @@ import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
 import { hiddenFileInput } from './MuiUploadCell.styles';
 
 /**

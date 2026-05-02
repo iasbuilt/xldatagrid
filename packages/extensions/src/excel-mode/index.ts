@@ -5,7 +5,7 @@
  *
  * @packageDocumentation
  */
-import { ExtensionDefinition, CellAddress, GridEvent, ExtensionContext } from '@istracked/datagrid-core';
+import { ExtensionDefinition, CellAddress, GridEvent, ExtensionContext } from '@iasbuilt/datagrid-core';
 
 /**
  * Configuration options for the {@link createExcelMode} extension factory.

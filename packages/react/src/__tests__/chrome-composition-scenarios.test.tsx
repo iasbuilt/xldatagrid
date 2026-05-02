@@ -21,7 +21,7 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import { DataGrid } from '../DataGrid';
-import type { ChromeCellContent } from '@istracked/datagrid-core';
+import type { ChromeCellContent } from '@iasbuilt/datagrid-core';
 
 type Row = { id: string; dept: string; name: string; salary: number };
 

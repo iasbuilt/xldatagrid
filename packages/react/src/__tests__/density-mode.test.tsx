@@ -18,7 +18,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
-import { ColumnDef } from '@istracked/datagrid-core';
+import { ColumnDef } from '@iasbuilt/datagrid-core';
 
 type Row = { id: string; description: string };
 

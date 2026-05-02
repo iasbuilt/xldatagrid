@@ -82,7 +82,7 @@ jobs:
     # Drift guard for design tokens. Fails if committed tokens no longer
     # match the manifest `contentHash`, i.e. someone hand-edited a token
     # file or forgot to re-run `pnpm sync:tokens` after bumping the
-    # sibling `istracked/tokens` repo.
+    # sibling `iasbuilt/tokens` repo.
     - name: Tokens drift check
       run: pnpm tokens:check
 

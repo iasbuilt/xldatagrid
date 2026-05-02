@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { MuiRichTextCell } from '../MuiRichTextCell';
-import type { ColumnDef, CellValue } from '@istracked/datagrid-core';
+import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 
 function makeColumn(overrides: Partial<ColumnDef> = {}): ColumnDef {
   return { id: 'col1', field: 'col1', title: 'Column 1', ...overrides };

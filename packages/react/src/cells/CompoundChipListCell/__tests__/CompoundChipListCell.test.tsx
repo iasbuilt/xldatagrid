@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { CompoundChipListCell } from '../CompoundChipListCell';
-import type { ColumnDef, CellValue } from '@istracked/datagrid-core';
+import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared helpers

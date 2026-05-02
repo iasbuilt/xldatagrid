@@ -11,7 +11,7 @@
  * @module context
  */
 import { createContext, useContext } from 'react';
-import type { GridModel } from '@istracked/datagrid-core';
+import type { GridModel } from '@iasbuilt/datagrid-core';
 import type { AtomicStore } from './atomic-grid-model';
 import type { GridAtomSystem } from './atoms';
 
@@ -25,7 +25,7 @@ import type { GridAtomSystem } from './atoms';
  * @typeParam TData - Row data shape; defaults to a generic record.
  */
 export interface GridContextValue<TData = Record<string, unknown>> {
-  /** Core imperative grid model from `@istracked/datagrid-core`. */
+  /** Core imperative grid model from `@iasbuilt/datagrid-core`. */
   model: GridModel<TData>;
   /** Atomic store backing fine-grained React subscriptions. */
   store: AtomicStore;

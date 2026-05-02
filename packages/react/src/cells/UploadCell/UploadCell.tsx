@@ -9,7 +9,7 @@
  * @module UploadCell
  */
 import React, { useState, useRef } from 'react';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import * as styles from './UploadCell.styles';
 
 /**

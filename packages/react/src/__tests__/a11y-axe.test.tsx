@@ -25,7 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { toHaveNoViolations } from 'vitest-axe/matchers';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 
 import { DataGrid } from '../DataGrid';
 import { cellRendererMap } from '../cells';

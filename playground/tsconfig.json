@@ -2,12 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@istracked/datagrid-core": ["../packages/core/src"],
-      "@istracked/datagrid-core/*": ["../packages/core/src/*"],
-      "@istracked/datagrid-react": ["../packages/react/src"],
-      "@istracked/datagrid-react/*": ["../packages/react/src/*"],
-      "@istracked/datagrid-extensions": ["../packages/extensions/src"],
-      "@istracked/datagrid-extensions/*": ["../packages/extensions/src/*"]
+      "@iasbuilt/datagrid-core": ["../packages/core/src"],
+      "@iasbuilt/datagrid-core/*": ["../packages/core/src/*"],
+      "@iasbuilt/datagrid-react": ["../packages/react/src"],
+      "@iasbuilt/datagrid-react/*": ["../packages/react/src/*"],
+      "@iasbuilt/datagrid-extensions": ["../packages/extensions/src"],
+      "@iasbuilt/datagrid-extensions/*": ["../packages/extensions/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

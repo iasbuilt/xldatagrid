@@ -6,8 +6,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@istracked/datagrid-core": ["../core/src"],
-      "@istracked/datagrid-react": ["../react/src"]
+      "@iasbuilt/datagrid-core": ["../core/src"],
+      "@iasbuilt/datagrid-react": ["../react/src"]
     }
   },
   "include": ["src"],

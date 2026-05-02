@@ -52,7 +52,7 @@
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import { DataGrid } from '../DataGrid';
-import { ColumnDef } from '@istracked/datagrid-core';
+import { ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Fixtures

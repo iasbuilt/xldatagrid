@@ -6,9 +6,9 @@
  */
 import React from 'react';
 import MenuItem from '@mui/material/MenuItem';
-import type { CellValue } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useSelectState } from '@istracked/datagrid-react';
+import type { CellValue } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useSelectState } from '@iasbuilt/datagrid-react';
 import { DisplayTypography, EditableSelect } from '../../components';
 
 /**

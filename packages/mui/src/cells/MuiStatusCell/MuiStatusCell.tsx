@@ -7,9 +7,9 @@
 import React from 'react';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
-import type { CellValue, StatusOption } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useSelectState } from '@istracked/datagrid-react';
+import type { CellValue, StatusOption } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useSelectState } from '@iasbuilt/datagrid-react';
 import { EditableSelect } from '../../components';
 import { colorDot } from './MuiStatusCell.styles';
 

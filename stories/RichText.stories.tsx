@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MuiDataGrid } from '@istracked/datagrid-mui';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';
 

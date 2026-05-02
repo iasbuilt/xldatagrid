@@ -13,7 +13,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, screen, act } from '@testing-library/react';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 
 import { BooleanSelectedCell } from '../cells/BooleanSelectedCell/BooleanSelectedCell';
 import { PasswordConfirmCell } from '../cells/PasswordConfirmCell/PasswordConfirmCell';

@@ -12,13 +12,13 @@ export const Welcome: StoryObj = {
     docs: {
       description: {
         story:
-          'Landing page for the @istracked/datagrid Storybook. Summarises feature categories and highlights the latest changes shipped on the feat/excel-365-column-menu branch.',
+          'Landing page for the @iasbuilt/datagrid Storybook. Summarises feature categories and highlights the latest changes shipped on the feat/excel-365-column-menu branch.',
       },
     },
   },
   render: () => (
     <div style={styles.introWrapper}>
-      <h1 style={styles.introTitle}>@istracked/datagrid — Kitchen Sink</h1>
+      <h1 style={styles.introTitle}>@iasbuilt/datagrid — Kitchen Sink</h1>
       <p style={styles.introSubtitle}>
         A comprehensive, enterprise-grade datagrid built in React 19 with Jotai state management.
       </p>

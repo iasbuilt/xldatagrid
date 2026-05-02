@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { TransposedGrid } from '../TransposedGrid';
-import type { TransposedField } from '@istracked/datagrid-core';
+import type { TransposedField } from '@iasbuilt/datagrid-core';
 
 describe('TransposedGrid', () => {
   const fields: TransposedField[] = [

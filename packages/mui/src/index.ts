@@ -1,5 +1,5 @@
 /**
- * Public API barrel file for the `@istracked/datagrid-mui` package.
+ * Public API barrel file for the `@iasbuilt/datagrid-mui` package.
  *
  * Re-exports all MUI cell renderers, the theme bridge, the convenience
  * wrapper, and the renderer map for drop-in use.

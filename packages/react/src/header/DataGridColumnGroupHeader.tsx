@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ColumnDef, ColumnGroupConfig } from '@istracked/datagrid-core';
+import type { ColumnDef, ColumnGroupConfig } from '@iasbuilt/datagrid-core';
 import type { ColumnGroupDragState } from '../state';
 import * as styles from './DataGridColumnGroupHeader.styles';
 

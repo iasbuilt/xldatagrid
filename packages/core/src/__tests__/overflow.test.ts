@@ -26,7 +26,7 @@
  * assertion errors pin the public contract before any production code exists.
  */
 // @ts-expect-error — Phase B will add `overflow.ts` and re-export these.
-import { truncateMiddle, getDefaultOverflowPolicy } from '@istracked/datagrid-core';
+import { truncateMiddle, getDefaultOverflowPolicy } from '@iasbuilt/datagrid-core';
 
 describe('truncateMiddle', () => {
   it('returns the input untouched when it already fits within maxChars', () => {

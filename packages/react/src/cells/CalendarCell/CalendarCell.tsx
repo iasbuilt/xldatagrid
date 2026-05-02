@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 import React, { useState, useRef, useEffect } from 'react';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import * as styles from './CalendarCell.styles';
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Core DataGrid React component module for the `@istracked/datagrid-react` package.
+ * Core DataGrid React component module for the `@iasbuilt/datagrid-react` package.
  *
  * Thin orchestrator that composes header, body, toolbar, and context-menu
  * sub-components. Manages model wiring, keyboard navigation, virtualization,
@@ -15,7 +15,7 @@
  *     number / controls chrome columns, group summary rows).
  *   - This module owns only presentation state and event translation. The
  *     authoritative data model — rows, columns, sort/filter/group state, and
- *     edit transactions — lives in a `GridModel` from `@istracked/datagrid-core`.
+ *     edit transactions — lives in a `GridModel` from `@iasbuilt/datagrid-core`.
  *     The React tree bridges to it through {@link useGridWithAtoms} (which
  *     instantiates the model) and {@link useGridStore} (which subscribes to it
  *     and produces snapshot-friendly state for rendering). All mutations flow
@@ -30,7 +30,7 @@
  */
 import React, { useRef, useCallback, useState, useEffect, useId, useMemo } from 'react';
 // Side-effect CSS import: the theme layer defines `--dg-*` tokens (scoped to
-// `.istracked-datagrid[data-theme="..."]`) plus the `data-row-selected`
+// `.iasbuilt-datagrid[data-theme="..."]`) plus the `data-row-selected`
 // header-darken rule. Without this import the CSS lives on disk but never
 // reaches the DOM, and host pages see inline-style fallbacks only.
 import './styles/datagrid-theme.css';
@@ -54,7 +54,7 @@ import {
   ControlsColumnConfig,
   RowNumberColumnConfig,
   Density,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import {
   groupRows,
   getVisibleRowsWithGroups,
@@ -64,7 +64,7 @@ import {
   stripField,
   runValidators,
   mostSevere,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { ValidationTooltip } from './ValidationTooltip';
 import { useGridWithAtoms } from './use-grid';
 import { useGridStore } from './use-grid-store';
@@ -82,14 +82,14 @@ import { DataGridToolbar } from './toolbar/DataGridToolbar';
 import { DataGridColumnFilterMenu } from './header/column-filter-menu/DataGridColumnFilterMenu';
 import { FilterConditionDialog } from './header/column-filter-menu/FilterConditionDialog';
 import { useBackgroundIndexer } from './hooks/use-background-indexer';
-import type { CompositeFilterDescriptor, FilterDescriptor } from '@istracked/datagrid-core';
+import type { CompositeFilterDescriptor, FilterDescriptor } from '@iasbuilt/datagrid-core';
 import * as styles from './DataGrid.styles';
 import { lightThemeTokens, darkThemeTokens } from './styles/tokens';
 
 /**
  * Props accepted by the {@link DataGrid} component.
  *
- * Extends `GridConfig<TData>` from `@istracked/datagrid-core` with React-only
+ * Extends `GridConfig<TData>` from `@iasbuilt/datagrid-core` with React-only
  * concerns: styling, dimension overrides, event callbacks, and UI-layer
  * toggles that have no representation inside the core model (toolbar chrome,
  * column menus, Excel-style filter menu).
@@ -101,7 +101,7 @@ import { lightThemeTokens, darkThemeTokens } from './styles/tokens';
  *
  * @typeParam TData - Shape of a single row record. Defaults to a generic
  *   object keyed by string.
- * @see GridConfig from `@istracked/datagrid-core` for the underlying data-model
+ * @see GridConfig from `@iasbuilt/datagrid-core` for the underlying data-model
  *   options (columns, rows, sorting/filtering/grouping defaults, theme, etc.).
  */
 export interface DataGridProps<TData extends Record<string, unknown> = Record<string, unknown>>
@@ -202,7 +202,7 @@ export interface CellRendererProps<TData = Record<string, unknown>> {
 // Theme token helpers
 //
 // The palette values used by the light and dark presets are ingested from the
-// organisation-wide `istracked/tokens` repository (see
+// organisation-wide `iasbuilt/tokens` repository (see
 // `packages/react/src/styles/tokens/`). The grid does not carry its own
 // hand-tuned colours any more — both theme objects are projections of the
 // W3C design-token tree onto the `--dg-*` custom properties our inline styles
@@ -254,7 +254,7 @@ export { LIGHT_THEME, DARK_THEME };
 /**
  * Top-level grid component.
  *
- * Instantiates a `GridModel` from `@istracked/datagrid-core`, wires it to a
+ * Instantiates a `GridModel` from `@iasbuilt/datagrid-core`, wires it to a
  * React render tree via subscription hooks, and composes the toolbar, column
  * group banner, header, body, context menu, column menu, and (optionally) the
  * Excel-365 filter menu into a single scrolling surface.
@@ -279,7 +279,7 @@ export { LIGHT_THEME, DARK_THEME };
  * ```
  *
  * @typeParam TData - Row shape; inferred from `columns`/`rows`.
- * @see GridModel and GridConfig from `@istracked/datagrid-core` for the
+ * @see GridModel and GridConfig from `@iasbuilt/datagrid-core` for the
  *   authoritative data model this component renders.
  */
 export function DataGrid<TData extends Record<string, unknown>>(props: DataGridProps<TData>) {
@@ -1289,7 +1289,7 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
       <div
         ref={containerRef}
         id={domId}
-        className={`istracked-datagrid${className ? ` ${className}` : ''}`}
+        className={`iasbuilt-datagrid${className ? ` ${className}` : ''}`}
         style={styles.gridContainer(!!config.theme, themeStyle, style)}
         tabIndex={0}
         role="grid"

@@ -31,7 +31,7 @@
  */
 import React from 'react';
 import { createPortal } from 'react-dom';
-import type { ValidationResult, ValidationSeverity } from '@istracked/datagrid-core';
+import type { ValidationResult, ValidationSeverity } from '@iasbuilt/datagrid-core';
 
 export interface ValidationTooltipProps {
   /** Id of the row the tooltip describes. */

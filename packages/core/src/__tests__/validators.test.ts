@@ -25,7 +25,7 @@
  * layer's tooltip rendering is tested separately in
  * `packages/react/src/__tests__/validation-tooltip.test.tsx`.
  *
- * The tests import from `@istracked/datagrid-core` directly so the test
+ * The tests import from `@iasbuilt/datagrid-core` directly so the test
  * doubles as a public-API smoke check: the new symbols must be re-exported
  * from the package barrel.
  */
@@ -37,7 +37,7 @@ import {
   type Validator,
   type ValidationResult,
   type CellValue,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Type-shape fixtures (enforced at type-check time; no runtime assertion).

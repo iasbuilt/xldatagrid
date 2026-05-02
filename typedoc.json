@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "@istracked/datagrid",
+  "name": "@iasbuilt/datagrid",
   "entryPoints": [
     "packages/core/src/index.ts",
     "packages/react/src/index.ts",
@@ -22,7 +22,7 @@
     "**/node_modules/**"
   ],
   "externalSymbolLinkMappings": {
-    "@istracked/datagrid-core": {
+    "@iasbuilt/datagrid-core": {
       "GridModel": "/modules/core_src.html",
       "GridModelState": "/modules/core_src.html",
       "GridConfig": "/modules/core_src.html",
@@ -30,7 +30,7 @@
       "ExtensionDefinition": "/modules/core_src.html",
       "ValidationResult": "/modules/core_src.html"
     },
-    "@istracked/datagrid-react": {
+    "@iasbuilt/datagrid-react": {
       "GridContext": "/modules/react_src.html",
       "createGridAtoms": "/modules/react_src.html",
       "createDerivedAtoms": "/modules/react_src.html",

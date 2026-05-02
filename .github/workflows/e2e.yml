@@ -68,7 +68,7 @@ jobs:
       run: pnpm exec playwright install-deps chromium
 
     - name: Build workspace packages
-      # Storybook resolves `@istracked/datagrid-*` via Vite aliases to the
+      # Storybook resolves `@iasbuilt/datagrid-*` via Vite aliases to the
       # package `src` directories (see .storybook/main.ts) so the build is
       # not strictly required for E2E. It is kept here to surface build
       # breakages early rather than only at runtime inside the iframe.

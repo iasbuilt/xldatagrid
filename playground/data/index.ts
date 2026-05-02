@@ -17,7 +17,7 @@ export type { Employee, Order } from '../../stories/data';
 // Cell Showcase — covers all 15 cell types in one grid
 // ---------------------------------------------------------------------------
 
-import type { ColumnDef, StatusOption } from '@istracked/datagrid-core';
+import type { ColumnDef, StatusOption } from '@iasbuilt/datagrid-core';
 
 export interface CellShowcase {
   id: string;

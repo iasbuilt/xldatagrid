@@ -9,8 +9,8 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import type { CellValue, ColumnDef, StatusOption } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
+import type { CellValue, ColumnDef, StatusOption } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
 
 interface ActionOption extends StatusOption {
   disabled?: boolean;

@@ -9,7 +9,7 @@
  * @module CompoundChipListCell
  */
 import React, { useState, useEffect } from 'react';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import * as styles from './CompoundChipListCell.styles';
 
 /**

@@ -20,7 +20,7 @@
  * @module SubGridCell
  */
 import React, { useContext, useSyncExternalStore, useCallback } from 'react';
-import type { CellValue } from '@istracked/datagrid-core';
+import type { CellValue } from '@iasbuilt/datagrid-core';
 import { GridContext } from '../../context';
 import * as styles from './SubGridCell.styles';
 

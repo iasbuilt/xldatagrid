@@ -11,8 +11,8 @@ export default defineConfig({
   external: [
     'react',
     'react-dom',
-    '@istracked/datagrid-core',
-    '@istracked/datagrid-react',
+    '@iasbuilt/datagrid-core',
+    '@iasbuilt/datagrid-react',
     '@mui/material',
     '@emotion/react',
     '@emotion/styled',

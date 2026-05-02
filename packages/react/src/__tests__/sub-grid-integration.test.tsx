@@ -4,7 +4,7 @@ import {
   GridModel,
   ColumnDef,
   GridConfig,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Fixtures

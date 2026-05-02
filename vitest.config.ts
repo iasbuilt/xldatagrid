@@ -17,10 +17,10 @@ export default defineConfig({
     // path above; esbuild's own import handling stays on that path as long as
     // we do not resolve through real paths ourselves.
     alias: {
-      '@istracked/datagrid-core': path.resolve(dirname, 'packages/core/src'),
-      '@istracked/datagrid-react': path.resolve(dirname, 'packages/react/src'),
-      '@istracked/datagrid-extensions': path.resolve(dirname, 'packages/extensions/src'),
-      '@istracked/datagrid-mui': path.resolve(dirname, 'packages/mui/src'),
+      '@iasbuilt/datagrid-core': path.resolve(dirname, 'packages/core/src'),
+      '@iasbuilt/datagrid-react': path.resolve(dirname, 'packages/react/src'),
+      '@iasbuilt/datagrid-extensions': path.resolve(dirname, 'packages/extensions/src'),
+      '@iasbuilt/datagrid-mui': path.resolve(dirname, 'packages/mui/src'),
       // idb is a dependency of the core search-index module; it lives in
       // packages/core/node_modules rather than the root node_modules because
       // pnpm hoists only to the workspace root when it appears in root deps.

@@ -14,7 +14,7 @@ import type {
   FilterState,
   RowKeyResolver,
   GroupState,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import {
   createColumnState,
   type ColumnState,
@@ -25,7 +25,7 @@ import {
   createUndoRedoState,
   type UndoRedoState,
   createGroupState,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 /**
  * Shape of the primitive atom bundle produced by {@link createGridAtoms}.

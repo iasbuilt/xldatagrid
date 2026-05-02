@@ -274,7 +274,7 @@ describe('Theming', () => {
   // ---------------------------------------------------------------------------
   // Token-driven palette (issue #17)
   //
-  // The light and dark presets are projections of the `istracked/tokens`
+  // The light and dark presets are projections of the `iasbuilt/tokens`
   // design-token tree; the grid must not carry its own hand-tuned colours.
   // These checks pin the row-background and header-background tokens to the
   // values ingested from `src/styles/tokens/{light,dark}.json`, so a future

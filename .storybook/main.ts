@@ -23,10 +23,10 @@ const config: StorybookConfig = {
     config.resolve.symlinks = false;
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@istracked/datagrid-core': pkgDir('core'),
-      '@istracked/datagrid-react': pkgDir('react'),
-      '@istracked/datagrid-extensions': pkgDir('extensions'),
-      '@istracked/datagrid-mui': pkgDir('mui'),
+      '@iasbuilt/datagrid-core': pkgDir('core'),
+      '@iasbuilt/datagrid-react': pkgDir('react'),
+      '@iasbuilt/datagrid-extensions': pkgDir('extensions'),
+      '@iasbuilt/datagrid-mui': pkgDir('mui'),
     };
     // Enable HMR for package source files
     config.server = config.server ?? {};
@@ -40,10 +40,10 @@ const config: StorybookConfig = {
       // Exclude workspace packages so Vite processes them as source
       exclude: [
         ...(config.optimizeDeps?.exclude ?? []),
-        '@istracked/datagrid-core',
-        '@istracked/datagrid-react',
-        '@istracked/datagrid-extensions',
-        '@istracked/datagrid-mui',
+        '@iasbuilt/datagrid-core',
+        '@iasbuilt/datagrid-react',
+        '@iasbuilt/datagrid-extensions',
+        '@iasbuilt/datagrid-mui',
       ],
     };
     return config;

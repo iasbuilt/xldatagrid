@@ -3,7 +3,7 @@
  * called out in the hardening plan (alongside the already-landed
  * `stripField.property.test.ts` and `getEndJumpCell.property.test.ts`).
  *
- * The grid models Shift+Arrow via two primitives in `@istracked/datagrid-core`:
+ * The grid models Shift+Arrow via two primitives in `@iasbuilt/datagrid-core`:
  *
  *   - `extendSelection(state, cell)` — sets `range.focus` to `cell`, keeping
  *     `range.anchor` fixed. This is the function called by the React
@@ -24,12 +24,12 @@ import {
   extendSelection,
   getNextCell,
   isCellInRange,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import type {
   ColumnDef,
   CellAddress,
   SelectionState,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi } from 'vitest';
 import { DataGrid } from '../DataGrid';
-import { ContextMenuItemDef } from '@istracked/datagrid-core';
+import { ContextMenuItemDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures

@@ -62,7 +62,7 @@ A high-performance, fully-featured datagrid component library for React 19. Buil
 ### Setup
 
 ```bash
-git clone https://github.com/istracked/xldatagrid.git
+git clone https://github.com/iasbuilt/xldatagrid.git
 cd xldatagrid
 pnpm install
 ```
@@ -297,10 +297,10 @@ To run a per-package command from the repo root:
 
 ```bash
 # Build only the core package
-pnpm --filter @istracked/datagrid-core run build
+pnpm --filter @iasbuilt/datagrid-core run build
 
 # Watch the react package
-pnpm --filter @istracked/datagrid-react run dev
+pnpm --filter @iasbuilt/datagrid-react run dev
 ```
 
 ### Playground
@@ -354,10 +354,10 @@ xldatagrid/
 
 | Package | Description | Version |
 |---------|-------------|---------|
-| `@istracked/datagrid-core` | Framework-agnostic grid engine: types, state models, sorting, filtering, selection, grouping, editing, clipboard, undo/redo, virtualization, plugin system | 0.1.0 |
-| `@istracked/datagrid-react` | React 19 bindings: `<DataGrid>`, hooks, 15 cell renderers, chrome columns, ghost row, master-detail, transposed grid, context menu, keyboard navigation, theming | 0.1.0 |
-| `@istracked/datagrid-extensions` | Drop-in extensions: regex validation, cell comments, column resize, CSV/JSON/Excel export | 0.1.0 |
-| `@istracked/datagrid-mui` | Material UI adapter: MUI-styled cell renderers for all 15 cell types, theme bridge, `<MuiDataGrid>` convenience wrapper | 0.1.0 |
+| `@iasbuilt/datagrid-core` | Framework-agnostic grid engine: types, state models, sorting, filtering, selection, grouping, editing, clipboard, undo/redo, virtualization, plugin system | 0.1.0 |
+| `@iasbuilt/datagrid-react` | React 19 bindings: `<DataGrid>`, hooks, 15 cell renderers, chrome columns, ghost row, master-detail, transposed grid, context menu, keyboard navigation, theming | 0.1.0 |
+| `@iasbuilt/datagrid-extensions` | Drop-in extensions: regex validation, cell comments, column resize, CSV/JSON/Excel export | 0.1.0 |
+| `@iasbuilt/datagrid-mui` | Material UI adapter: MUI-styled cell renderers for all 15 cell types, theme bridge, `<MuiDataGrid>` convenience wrapper | 0.1.0 |
 
 ## Features
 
@@ -468,16 +468,16 @@ The MUI package bridges your MUI theme to DataGrid CSS variables automatically:
 
 ```bash
 # Install
-pnpm add @istracked/datagrid-core @istracked/datagrid-react
+pnpm add @iasbuilt/datagrid-core @iasbuilt/datagrid-react
 
 # Or with MUI integration
-pnpm add @istracked/datagrid-core @istracked/datagrid-react @istracked/datagrid-mui
+pnpm add @iasbuilt/datagrid-core @iasbuilt/datagrid-react @iasbuilt/datagrid-mui
 ```
 
 ```tsx
-import { DataGrid } from '@istracked/datagrid-react';
-import { TextCell } from '@istracked/datagrid-react/cells/TextCell';
-import { NumericCell } from '@istracked/datagrid-react/cells/NumericCell';
+import { DataGrid } from '@iasbuilt/datagrid-react';
+import { TextCell } from '@iasbuilt/datagrid-react/cells/TextCell';
+import { NumericCell } from '@iasbuilt/datagrid-react/cells/NumericCell';
 
 const columns = [
   { id: 'name', field: 'name', title: 'Name', cellType: 'text', editable: true },
@@ -532,7 +532,7 @@ Add controls and row numbers to the grid edges:
 ### Master-Detail
 
 ```tsx
-import { MasterDetail } from '@istracked/datagrid-react';
+import { MasterDetail } from '@iasbuilt/datagrid-react';
 
 <MasterDetail
   data={data}
@@ -565,8 +565,8 @@ import { MasterDetail } from '@istracked/datagrid-react';
 ### Extensions
 
 ```tsx
-import { createRegexValidation } from '@istracked/datagrid-extensions';
-import { createExportExtension } from '@istracked/datagrid-extensions';
+import { createRegexValidation } from '@iasbuilt/datagrid-extensions';
+import { createExportExtension } from '@iasbuilt/datagrid-extensions';
 
 // Regex validation on email fields
 const emailValidator = createRegexValidation({
@@ -581,7 +581,7 @@ const exporter = createExportExtension({ format: 'csv' });
 ### MUI Integration
 
 ```tsx
-import { MuiDataGrid } from '@istracked/datagrid-mui';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
 
 // Automatically uses MUI-themed cell renderers and respects your MUI theme
 <MuiDataGrid
@@ -597,7 +597,7 @@ import { MuiDataGrid } from '@istracked/datagrid-mui';
 ### Imperative Control via Hooks
 
 ```tsx
-import { useGrid } from '@istracked/datagrid-react';
+import { useGrid } from '@iasbuilt/datagrid-react';
 
 function MyGrid() {
   const model = useGrid({ columns, data, rowKey: 'id' });
@@ -615,7 +615,7 @@ function MyGrid() {
 ### Fine-Grained Atom Subscriptions
 
 ```tsx
-import { useGridWithAtoms } from '@istracked/datagrid-react';
+import { useGridWithAtoms } from '@iasbuilt/datagrid-react';
 
 function MyGrid() {
   const { model, store, atoms } = useGridWithAtoms(config);
@@ -725,7 +725,7 @@ Events dispatched through the three-phase EventBus:
 ### Writing Extensions
 
 ```typescript
-import type { ExtensionDefinition } from '@istracked/datagrid-core';
+import type { ExtensionDefinition } from '@iasbuilt/datagrid-core';
 
 const myExtension: ExtensionDefinition = {
   id: 'my-extension',

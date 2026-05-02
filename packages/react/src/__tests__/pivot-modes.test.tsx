@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DataGrid, CellRendererProps } from '../DataGrid';
-import type { ColumnDef, RowTypeDef, CellType } from '@istracked/datagrid-core';
+import type { ColumnDef, RowTypeDef, CellType } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

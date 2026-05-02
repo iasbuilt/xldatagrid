@@ -5,7 +5,7 @@
  *
  * @packageDocumentation
  */
-import { ExtensionDefinition, CellAddress, ValidationResult, ValidationSeverity, GridEvent } from '@istracked/datagrid-core';
+import { ExtensionDefinition, CellAddress, ValidationResult, ValidationSeverity, GridEvent } from '@iasbuilt/datagrid-core';
 
 /**
  * A single regex-based validation rule applied to cell values within a column.

@@ -4,8 +4,8 @@ import React from 'react';
 
 import { SubGridCell } from '../SubGridCell';
 import { GridContext } from '../../../context';
-import { createGridModel } from '@istracked/datagrid-core';
-import type { ColumnDef, CellValue } from '@istracked/datagrid-core';
+import { createGridModel } from '@iasbuilt/datagrid-core';
+import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared helpers

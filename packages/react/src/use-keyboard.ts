@@ -27,7 +27,7 @@ import {
   serializeRangeToText,
   serializeRangeToHtml,
   parseTextToGrid,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 /**
  * Binds keyboard navigation and editing shortcuts to a grid container element.
@@ -94,16 +94,16 @@ export function useKeyboard<TData extends Record<string, unknown>>(
       if (!container.contains(e.target)) return;
 
       // If the target is inside this container but also inside a proper
-      // nested DataGrid instance (identified by the `istracked-datagrid`
+      // nested DataGrid instance (identified by the `iasbuilt-datagrid`
       // class on the nested grid root), defer to that grid's own handler.
       // We walk from the target upward and stop at container. Using the
-      // `istracked-datagrid` class rather than `role="grid"` avoids false
+      // `iasbuilt-datagrid` class rather than `role="grid"` avoids false
       // positives from consumer elements that happen to carry `role="grid"`
       // (e.g. accessibility wrappers, toolbar composites) which have no
       // DataGrid keyboard handler attached to them.
       let el: Element | null = e.target;
       while (el && el !== container) {
-        if (el.classList.contains('istracked-datagrid')) {
+        if (el.classList.contains('iasbuilt-datagrid')) {
           // Target is inside a nested DataGrid — defer.
           return;
         }

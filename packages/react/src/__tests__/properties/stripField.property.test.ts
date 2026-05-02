@@ -7,12 +7,12 @@
  */
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { stripField } from '@istracked/datagrid-core';
+import { stripField } from '@iasbuilt/datagrid-core';
 import type {
   FilterDescriptor,
   CompositeFilterDescriptor,
   FilterOperator,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Arbitraries

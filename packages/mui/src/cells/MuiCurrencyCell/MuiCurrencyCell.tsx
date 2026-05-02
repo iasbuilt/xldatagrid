@@ -7,9 +7,9 @@
 import React from 'react';
 import InputAdornment from '@mui/material/InputAdornment';
 import Typography from '@mui/material/Typography';
-import type { CellValue } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useDraftState } from '@istracked/datagrid-react';
+import type { CellValue } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useDraftState } from '@iasbuilt/datagrid-react';
 import { EditableTextField } from '../../components';
 
 function parseCurrencyFormat(format?: string): { symbol: string; negativeRed: boolean } {

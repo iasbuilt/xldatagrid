@@ -11,7 +11,7 @@
  * @module event-bridge
  */
 import type { createStore, Atom } from 'jotai/vanilla';
-import type { GridEventType, EventBus } from '@istracked/datagrid-core';
+import type { GridEventType, EventBus } from '@iasbuilt/datagrid-core';
 import type { BaseAtoms } from './base-atoms';
 
 /**

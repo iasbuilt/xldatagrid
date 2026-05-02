@@ -13,7 +13,7 @@
  * rows, aggregate rows, data rows, row-number overrides, empty state).
  */
 import type { CSSProperties } from 'react';
-import type { RowOutlineSides } from '@istracked/datagrid-core';
+import type { RowOutlineSides } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Scrollable body
@@ -240,7 +240,7 @@ export const aggregateCell = (width: number): CSSProperties => ({
  * Per-row border override descriptor forwarded from
  * `chrome.getRowBorder`. Fields mirror the public
  * `RowBorderStyle` shape and are applied on top of the row's default border.
- * Kept private to this module so public API stays in `@istracked/datagrid-core`.
+ * Kept private to this module so public API stays in `@iasbuilt/datagrid-core`.
  */
 export interface RowBorderOverride {
   color?: string;

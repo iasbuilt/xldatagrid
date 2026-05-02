@@ -6,7 +6,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@istracked/datagrid-core": ["../core/src/index.ts"]
+      "@iasbuilt/datagrid-core": ["../core/src/index.ts"]
     }
   },
   "include": ["src", "src/**/*.json"],

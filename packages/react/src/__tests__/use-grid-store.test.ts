@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi } from 'vitest';
-import { createGridModel, GridModel, GridModelState } from '@istracked/datagrid-core';
+import { createGridModel, GridModel, GridModelState } from '@iasbuilt/datagrid-core';
 import { useGridStore, useGridSelector } from '../use-grid-store';
 
 // ---------------------------------------------------------------------------

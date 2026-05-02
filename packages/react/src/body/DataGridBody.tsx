@@ -52,7 +52,7 @@ import {
   truncateMiddle,
   truncateEnd,
   getDefaultOverflowPolicy,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import type {
   ControlsColumnConfig,
   RowNumberColumnConfig,
@@ -62,7 +62,7 @@ import type {
   ChromeRowResolverContext,
   OverflowPolicy,
   Density,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { CellRendererProps } from '../DataGrid';
 import { ChromeControlsCell, ChromeRowNumberCell } from '../chrome';
 import { GhostRow } from '../GhostRow';

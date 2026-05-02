@@ -1,5 +1,5 @@
 import { createCellComments, CellCommentsConfig, CommentThread } from '../cell-comments';
-import type { GridEvent, CellAddress } from '@istracked/datagrid-core';
+import type { GridEvent, CellAddress } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

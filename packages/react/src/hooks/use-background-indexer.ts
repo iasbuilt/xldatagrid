@@ -28,7 +28,7 @@
  * Inject-for-test seams: both `buildIndex` and `openAdapter` can be
  * supplied through options. Production callers leave them undefined; the
  * hook lazily `await import(...)`s the real implementations from
- * `@istracked/datagrid-core` only when needed, which keeps the core
+ * `@iasbuilt/datagrid-core` only when needed, which keeps the core
  * bundle out of consumers that fully inject their own builder/adapter.
  *
  * Invariants worth preserving on any refactor:
@@ -61,7 +61,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 /**
  * Minimal structural shape of a built column index payload.
  *
- * The upstream `@istracked/datagrid-core/search-index/column-index` module
+ * The upstream `@iasbuilt/datagrid-core/search-index/column-index` module
  * may expose a richer type; this hook only depends on the fields shown
  * here. Declaring a narrow structural contract keeps the hook usable even
  * when the core package ships a superset of this interface.
@@ -207,7 +207,7 @@ async function defaultBuildIndex(): Promise<
     field: string,
   ) => ColumnSearchIndex
 > {
-  const mod = (await import('@istracked/datagrid-core').catch(() => null)) as
+  const mod = (await import('@iasbuilt/datagrid-core').catch(() => null)) as
     | { buildColumnIndex?: unknown }
     | null;
   if (mod && typeof mod.buildColumnIndex === 'function') {
@@ -218,7 +218,7 @@ async function defaultBuildIndex(): Promise<
     ) => ColumnSearchIndex;
   }
   throw new Error(
-    'useBackgroundIndexer: buildColumnIndex is not exported from @istracked/datagrid-core. ' +
+    'useBackgroundIndexer: buildColumnIndex is not exported from @iasbuilt/datagrid-core. ' +
       'Pass a `buildIndex` injector via options.',
   );
 }
@@ -233,14 +233,14 @@ async function defaultBuildIndex(): Promise<
  * @returns Resolved {@link IdbAdapter} instance.
  */
 async function defaultOpenAdapter(): Promise<IdbAdapter> {
-  const mod = (await import('@istracked/datagrid-core').catch(() => null)) as
+  const mod = (await import('@iasbuilt/datagrid-core').catch(() => null)) as
     | { openIdbAdapter?: () => Promise<IdbAdapter> }
     | null;
   if (mod && typeof mod.openIdbAdapter === 'function') {
     return mod.openIdbAdapter();
   }
   throw new Error(
-    'useBackgroundIndexer: openIdbAdapter is not exported from @istracked/datagrid-core. ' +
+    'useBackgroundIndexer: openIdbAdapter is not exported from @iasbuilt/datagrid-core. ' +
       'Pass an `openAdapter` injector via options.',
   );
 }

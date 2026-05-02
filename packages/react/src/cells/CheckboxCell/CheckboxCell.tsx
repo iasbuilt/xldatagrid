@@ -11,7 +11,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import * as styles from './CheckboxCell.styles';
 
 /**

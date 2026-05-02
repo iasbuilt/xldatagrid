@@ -14,7 +14,7 @@ import {
   createRowInsertCommand,
   createRowDeleteCommand,
   UndoRedoState,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 type TestRow = { id: string; name: string; age: number; city: string };
 

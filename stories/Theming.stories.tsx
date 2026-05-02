@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MuiDataGrid } from '@istracked/datagrid-mui';
-import { lightThemeTokens, darkThemeTokens } from '@istracked/datagrid-react';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import { lightThemeTokens, darkThemeTokens } from '@iasbuilt/datagrid-react';
 import { makeEmployees, defaultColumns } from './data';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';
@@ -13,7 +13,7 @@ export default meta;
 
 /**
  * Both the light and dark preset palettes are ingested from the
- * organisation-wide `istracked/tokens` repository (see
+ * organisation-wide `iasbuilt/tokens` repository (see
  * `scripts/sync-tokens.mjs` and `packages/react/src/styles/tokens/`). The
  * story body below pulls a few headline colours off the resolved preset
  * maps so it is obvious at a glance that the wrapper chrome and the grid
@@ -29,7 +29,7 @@ export const LightTheme: StoryObj = {
     <div style={storyContainer}>
       <h2 style={styles.heading}>Light Theme (Default)</h2>
       <p style={styles.subtitle}>
-        Palette ingested from <code>istracked/tokens</code>. Row bg{' '}
+        Palette ingested from <code>iasbuilt/tokens</code>. Row bg{' '}
         <code>{lightRowBg}</code> · Header bg <code>{lightHeaderBg}</code>.
       </p>
       <div style={gridContainer}>
@@ -51,7 +51,7 @@ export const DarkTheme: StoryObj = {
     <div style={{ ...storyContainer, ...styles.themingDarkWrapper }}>
       <h2 style={styles.heading}>Dark Theme</h2>
       <p style={{ ...styles.subtitle, color: darkThemeTokens['--dg-text-color'] }}>
-        Palette ingested from <code>istracked/tokens</code>. Row bg{' '}
+        Palette ingested from <code>iasbuilt/tokens</code>. Row bg{' '}
         <code>{darkRowBg}</code> · Header bg <code>{darkHeaderBg}</code>.
         Rows must be visibly darker than the header; any drift means the
         sync script needs re-running.

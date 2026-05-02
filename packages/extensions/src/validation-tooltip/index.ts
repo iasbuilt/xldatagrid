@@ -5,7 +5,7 @@
  *
  * @packageDocumentation
  */
-import { ExtensionDefinition, ExtensionContext, ValidationResult, CellAddress, GridEvent } from '@istracked/datagrid-core';
+import { ExtensionDefinition, ExtensionContext, ValidationResult, CellAddress, GridEvent } from '@iasbuilt/datagrid-core';
 
 /**
  * Configuration options for the {@link createValidationTooltip} extension factory.

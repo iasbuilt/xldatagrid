@@ -95,7 +95,7 @@ describe('DataGrid structure', () => {
     renderGrid({ className: 'my-grid' });
     const grid = screen.getByRole('grid');
     expect(grid.className).toContain('my-grid');
-    expect(grid.className).toContain('istracked-datagrid');
+    expect(grid.className).toContain('iasbuilt-datagrid');
   });
 
   it('applies custom style', () => {

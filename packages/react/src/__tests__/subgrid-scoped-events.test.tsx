@@ -21,7 +21,7 @@
 import React from 'react';
 import { render, act, fireEvent } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
-import { ColumnDef } from '@istracked/datagrid-core';
+import { ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -64,7 +64,7 @@ describe('Subgrid scoped keyboard events — outer role="grid" wrapper', () => {
     );
 
     const innerGrid = container.querySelector(
-      '.istracked-datagrid[role="grid"]',
+      '.iasbuilt-datagrid[role="grid"]',
     ) as HTMLElement;
     expect(innerGrid).not.toBeNull();
 
@@ -122,10 +122,10 @@ describe('Subgrid scoped keyboard events — outer role="grid" wrapper', () => {
     //
     // Actually — re-reading the findings more carefully: the bug is that
     // a toolbar/consumer wraps a DataGrid with role="grid". The keyboard handler
-    // for the DataGrid listens on `containerRef` (the `.istracked-datagrid` div).
+    // for the DataGrid listens on `containerRef` (the `.iasbuilt-datagrid` div).
     // When keydown fires, e.target is a cell inside the DataGrid.
     // e.target.closest('[role="grid"]') walks UP from the cell:
-    //   cell → row → body-div → .istracked-datagrid[role="grid"]  ← FOUND
+    //   cell → row → body-div → .iasbuilt-datagrid[role="grid"]  ← FOUND
     // This returns the DataGrid's own root. closestGrid === container → passes.
     //
     // So for simple consumer wrapping, the bug doesn't manifest. The bug only

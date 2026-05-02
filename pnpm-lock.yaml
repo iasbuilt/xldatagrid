@@ -132,10 +132,10 @@ importers:
 
   packages/extensions:
     dependencies:
-      '@istracked/datagrid-core':
+      '@iasbuilt/datagrid-core':
         specifier: workspace:*
         version: link:../core
-      '@istracked/datagrid-react':
+      '@iasbuilt/datagrid-react':
         specifier: workspace:*
         version: link:../react
       react:
@@ -157,10 +157,10 @@ importers:
       '@emotion/styled':
         specifier: '>=11.0.0'
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.0.14)(react@19.0.5))(@types/react@19.0.14)(react@19.0.5)
-      '@istracked/datagrid-core':
+      '@iasbuilt/datagrid-core':
         specifier: workspace:*
         version: link:../core
-      '@istracked/datagrid-react':
+      '@iasbuilt/datagrid-react':
         specifier: workspace:*
         version: link:../react
       '@mui/material':
@@ -194,7 +194,7 @@ importers:
 
   packages/react:
     dependencies:
-      '@istracked/datagrid-core':
+      '@iasbuilt/datagrid-core':
         specifier: workspace:*
         version: link:../core
       dompurify:
@@ -237,13 +237,13 @@ importers:
 
   playground:
     dependencies:
-      '@istracked/datagrid-core':
+      '@iasbuilt/datagrid-core':
         specifier: workspace:*
         version: link:../packages/core
-      '@istracked/datagrid-extensions':
+      '@iasbuilt/datagrid-extensions':
         specifier: workspace:*
         version: link:../packages/extensions
-      '@istracked/datagrid-react':
+      '@iasbuilt/datagrid-react':
         specifier: workspace:*
         version: link:../packages/react
       react:

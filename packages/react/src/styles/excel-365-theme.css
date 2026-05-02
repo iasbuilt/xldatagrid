@@ -9,8 +9,8 @@
 
 /* Scoped opt-in variant — applies Excel tokens under an explicit class */
 .dg-theme-excel365,
-.istracked-datagrid.dg-theme-excel365,
-.istracked-datagrid[data-theme="excel365"] {
+.iasbuilt-datagrid.dg-theme-excel365,
+.iasbuilt-datagrid[data-theme="excel365"] {
   --dg-font-family: "Segoe UI", "Calibri", system-ui, -apple-system, sans-serif;
   --dg-font-size: 12px;
   --dg-font-size-header: 12px;

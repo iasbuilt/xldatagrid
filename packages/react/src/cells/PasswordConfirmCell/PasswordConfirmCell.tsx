@@ -24,7 +24,7 @@
  * @packageDocumentation
  */
 import React, { useState, useRef, useEffect } from 'react';
-import type { CellValue, ColumnDef } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
 import { usePasswordInput } from '../hooks/usePasswordInput';
 import * as styles from './PasswordConfirmCell.styles';
 

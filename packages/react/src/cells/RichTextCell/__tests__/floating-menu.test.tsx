@@ -37,7 +37,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { RichTextCell } from '../RichTextCell';
-import type { ColumnDef, CellValue } from '@istracked/datagrid-core';
+import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared helpers (aligned with `RichTextCell.test.tsx`)

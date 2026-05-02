@@ -13,7 +13,7 @@
  * @module use-virtualization
  */
 import { useState, useCallback, useEffect } from 'react';
-import { calculateVisibleRows, calculateVisibleColumns, VirtualRange } from '@istracked/datagrid-core';
+import { calculateVisibleRows, calculateVisibleColumns, VirtualRange } from '@iasbuilt/datagrid-core';
 
 /**
  * Snapshot of the current virtualization window, including the visible row

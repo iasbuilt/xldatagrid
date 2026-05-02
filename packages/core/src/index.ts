@@ -2,7 +2,7 @@
  * Public entry point for the `@datagrid/core` package.
  *
  * This barrel is the single import surface consumed by downstream packages
- * (notably `@istracked/datagrid-react`) and by application code embedding the
+ * (notably `@iasbuilt/datagrid-react`) and by application code embedding the
  * grid directly. It stitches together the framework-agnostic building blocks
  * of the data grid — state containers, selection and sort engines, the plugin
  * host, and the persisted search-index primitives — so that every public

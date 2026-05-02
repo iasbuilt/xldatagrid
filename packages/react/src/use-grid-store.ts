@@ -12,7 +12,7 @@
  * @module use-grid-store
  */
 import { useSyncExternalStore, useCallback, useRef } from 'react';
-import { GridModel, GridModelState } from '@istracked/datagrid-core';
+import { GridModel, GridModelState } from '@iasbuilt/datagrid-core';
 
 /**
  * Subscribes to a {@link GridModel} and returns the full state snapshot on

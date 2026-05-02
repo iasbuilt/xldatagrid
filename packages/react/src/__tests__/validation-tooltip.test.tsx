@@ -47,7 +47,7 @@ import {
   CellValue,
   ValidationResult,
   Validator,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures

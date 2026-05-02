@@ -9,8 +9,8 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import type { TransposedField, CellValue } from '@istracked/datagrid-core';
-import { createTransposedConfig } from '@istracked/datagrid-core';
+import type { TransposedField, CellValue } from '@iasbuilt/datagrid-core';
+import { createTransposedConfig } from '@iasbuilt/datagrid-core';
 import { DataGrid, type CellRendererProps } from './DataGrid';
 import { cellRendererMap, TextCell } from './cells';
 

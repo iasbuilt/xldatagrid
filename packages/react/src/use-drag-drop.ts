@@ -11,7 +11,7 @@
  * @module use-drag-drop
  */
 import { useCallback, useRef, useState } from 'react';
-import { GridModel, FileDropConfig, DropTarget } from '@istracked/datagrid-core';
+import { GridModel, FileDropConfig, DropTarget } from '@iasbuilt/datagrid-core';
 
 /**
  * Reactive state exposed by the {@link useDragDrop} hook, representing the

@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MuiDataGrid } from '@istracked/datagrid-mui';
-import { applyFiltering } from '@istracked/datagrid-core';
-import type { FilterState } from '@istracked/datagrid-core';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import { applyFiltering } from '@iasbuilt/datagrid-core';
+import type { FilterState } from '@iasbuilt/datagrid-core';
 import { makeEmployees, defaultColumns } from './data';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';

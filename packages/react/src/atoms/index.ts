@@ -9,7 +9,7 @@
  *
  * @module atoms
  */
-import type { GridConfig, RowKeyResolver, EventBus } from '@istracked/datagrid-core';
+import type { GridConfig, RowKeyResolver, EventBus } from '@iasbuilt/datagrid-core';
 import { createGridAtoms, type BaseAtoms } from './base-atoms';
 import { createDerivedAtoms, type DerivedAtoms } from './derived-atoms';
 import { createActionAtoms, type ActionAtoms } from './action-atoms';

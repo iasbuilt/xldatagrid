@@ -12,7 +12,7 @@
  * lockstep.
  */
 import React, { useCallback, useRef, useState } from 'react';
-import type { ColumnDef, SortState, ControlsColumnConfig, RowNumberColumnConfig } from '@istracked/datagrid-core';
+import type { ColumnDef, SortState, ControlsColumnConfig, RowNumberColumnConfig } from '@iasbuilt/datagrid-core';
 import type { ColumnDragState } from '../state';
 import { ChromeControlsHeaderCell, ChromeRowNumberHeaderCell } from '../chrome';
 import * as styles from './DataGridHeader.styles';

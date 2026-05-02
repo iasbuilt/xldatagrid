@@ -17,7 +17,7 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
 import { cellRendererMap } from '../cells';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 
 type Member = { id: string; name: string };
 type Team = { id: string; teamName: string; members: Member[] };

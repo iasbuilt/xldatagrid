@@ -13,7 +13,7 @@ import {
   ExportResult,
   PdfTableData,
 } from '../export';
-import type { ColumnDef, ExtensionContext, GridState } from '@istracked/datagrid-core';
+import type { ColumnDef, ExtensionContext, GridState } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

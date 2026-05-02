@@ -1,9 +1,9 @@
 /**
  * Barrel file for the `hooks/` directory.
  *
- * Collects the React hooks exposed by `@istracked/datagrid-react` so
+ * Collects the React hooks exposed by `@iasbuilt/datagrid-react` so
  * application code and downstream components can import them from
- * `@istracked/datagrid-react/hooks` without reaching into internal paths.
+ * `@iasbuilt/datagrid-react/hooks` without reaching into internal paths.
  * Each hook adapts a framework-agnostic core subsystem (event bus, search
  * index, etc.) into a React-friendly stateful API.
  */

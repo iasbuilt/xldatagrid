@@ -25,11 +25,11 @@ import type {
   FilterState,
   ColumnDef,
   ExtensionDefinition,
-} from '@istracked/datagrid-core';
-import { EventBus, PluginHost, getVisibleColumns, toggleRowSelection, createRowMoveCommand, pushCommand } from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
+import { EventBus, PluginHost, getVisibleColumns, toggleRowSelection, createRowMoveCommand, pushCommand } from '@iasbuilt/datagrid-core';
 import { createGridAtomSystem, type GridAtomSystem } from './atoms';
 import { createEventBridge } from './atoms/event-bridge';
-import type { GridModel, GridModelState } from '@istracked/datagrid-core';
+import type { GridModel, GridModelState } from '@iasbuilt/datagrid-core';
 
 /**
  * Type alias for the Jotai vanilla store instance returned by `createStore`.

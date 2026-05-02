@@ -225,7 +225,7 @@ export function MasterDetail<TData extends Record<string, unknown>>(
 
   return (
     <div
-      className="istracked-master-detail"
+      className="iasbuilt-master-detail"
       style={styles.container}
       role="grid"
       aria-rowcount={data.length}

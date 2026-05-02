@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import Checkbox from '@mui/material/Checkbox';
-import type { CellRendererProps } from '@istracked/datagrid-react';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
 
 /**
  * MUI-based boolean cell renderer using MUI Checkbox.

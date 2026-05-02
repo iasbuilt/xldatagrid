@@ -1,5 +1,5 @@
 {
-  "name": "@istracked/datagrid-extensions",
+  "name": "@iasbuilt/datagrid-extensions",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,8 +18,8 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@istracked/datagrid-core": "workspace:*",
-    "@istracked/datagrid-react": "workspace:*"
+    "@iasbuilt/datagrid-core": "workspace:*",
+    "@iasbuilt/datagrid-react": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"

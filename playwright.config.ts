@@ -1,5 +1,5 @@
 /**
- * Playwright configuration for the `@istracked/datagrid-monorepo` end-to-end
+ * Playwright configuration for the `@iasbuilt/datagrid-monorepo` end-to-end
  * suite. Specs live under `e2e/` and drive a real browser against the
  * Storybook instance that renders the grid packages.
  *

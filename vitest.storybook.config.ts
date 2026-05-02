@@ -14,10 +14,10 @@ export default defineConfig({
     // Note: Vite does not expose a `symlinks` toggle here; rely on `root`
     // being the PWD (symlink) path to keep the workaround for spaces-in-path.
     alias: {
-      '@istracked/datagrid-core': path.resolve(dirname, 'packages/core/src'),
-      '@istracked/datagrid-react': path.resolve(dirname, 'packages/react/src'),
-      '@istracked/datagrid-extensions': path.resolve(dirname, 'packages/extensions/src'),
-      '@istracked/datagrid-mui': path.resolve(dirname, 'packages/mui/src')
+      '@iasbuilt/datagrid-core': path.resolve(dirname, 'packages/core/src'),
+      '@iasbuilt/datagrid-react': path.resolve(dirname, 'packages/react/src'),
+      '@iasbuilt/datagrid-extensions': path.resolve(dirname, 'packages/extensions/src'),
+      '@iasbuilt/datagrid-mui': path.resolve(dirname, 'packages/mui/src')
     }
   },
   plugins: [

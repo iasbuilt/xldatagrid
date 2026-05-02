@@ -10,8 +10,8 @@
  */
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { getEndJumpCell } from '@istracked/datagrid-core';
-import type { ColumnDef, CellAddress } from '@istracked/datagrid-core';
+import { getEndJumpCell } from '@iasbuilt/datagrid-core';
+import type { ColumnDef, CellAddress } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Arbitraries

@@ -7,7 +7,7 @@ import {
   ColumnDef,
   GridModel,
   createGridModel,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { vi } from 'vitest';
 
 type TestRow = { id: string; name: string; age: number; city: string; readonly?: boolean };

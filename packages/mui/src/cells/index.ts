@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import type { CellRendererProps } from '@istracked/datagrid-react';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
 
 export { MuiTextCell } from './MuiTextCell';
 export { MuiNumericCell } from './MuiNumericCell';
@@ -46,7 +46,7 @@ import { MuiActionsCell } from './MuiActionsCell';
 /**
  * Maps column type identifiers to their corresponding MUI cell renderer components.
  *
- * Drop-in replacement for the default `cellRendererMap` from `@istracked/datagrid-react`,
+ * Drop-in replacement for the default `cellRendererMap` from `@iasbuilt/datagrid-react`,
  * using Material UI components for consistent MUI theming.
  */
 export const muiCellRendererMap: Record<string, React.ComponentType<CellRendererProps<any>>> = {

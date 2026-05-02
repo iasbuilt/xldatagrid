@@ -13,18 +13,18 @@ export default defineConfig({
     // The spaces-in-path workaround is handled by pointing `rootDir` at the
     // PWD (symlink) path above, so path aliases below stay on that path.
     alias: {
-      '@istracked/datagrid-core': pkgDir('core'),
-      '@istracked/datagrid-react': pkgDir('react'),
-      '@istracked/datagrid-extensions': pkgDir('extensions'),
-      '@istracked/datagrid-mui': pkgDir('mui'),
+      '@iasbuilt/datagrid-core': pkgDir('core'),
+      '@iasbuilt/datagrid-react': pkgDir('react'),
+      '@iasbuilt/datagrid-extensions': pkgDir('extensions'),
+      '@iasbuilt/datagrid-mui': pkgDir('mui'),
     },
   },
   optimizeDeps: {
     exclude: [
-      '@istracked/datagrid-core',
-      '@istracked/datagrid-react',
-      '@istracked/datagrid-extensions',
-      '@istracked/datagrid-mui',
+      '@iasbuilt/datagrid-core',
+      '@iasbuilt/datagrid-react',
+      '@iasbuilt/datagrid-extensions',
+      '@iasbuilt/datagrid-mui',
     ],
   },
   server: {

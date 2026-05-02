@@ -21,7 +21,7 @@
  * "used but was unexpected" diagnostic flipping the meaning).
  */
 
-import type { ColumnDef, Validator } from '@istracked/datagrid-core';
+import type { ColumnDef, Validator } from '@iasbuilt/datagrid-core';
 
 type Row = { id: string; name: string };
 

@@ -9,8 +9,8 @@ import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import type { CellValue } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
+import type { CellValue } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
 
 interface ChipItem {
   id: string;

@@ -8,7 +8,7 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   splitting: false,
-  external: ['react', 'react-dom', '@istracked/datagrid-core'],
+  external: ['react', 'react-dom', '@iasbuilt/datagrid-core'],
   esbuildOptions(options) {
     options.jsx = 'automatic';
   },

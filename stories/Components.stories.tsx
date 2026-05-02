@@ -92,7 +92,7 @@ export const ComponentList: StoryObj = {
 // New-in-branch components (feat/excel-365-column-menu)
 //
 // The Excel-365 column filter menu and its condition dialog live in the
-// @istracked/datagrid-react package as internal sub-components of DataGrid.
+// @iasbuilt/datagrid-react package as internal sub-components of DataGrid.
 // They are not standalone imports a consumer wires directly — instead they
 // are activated via the `showFilterMenu` prop on DataGrid / MuiDataGrid,
 // which mounts and positions them internally. This story documents what

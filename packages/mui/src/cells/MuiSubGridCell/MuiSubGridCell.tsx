@@ -16,9 +16,9 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import CloseIcon from '@mui/icons-material/Close';
-import type { CellValue } from '@istracked/datagrid-core';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { GridContext } from '@istracked/datagrid-react';
+import type { CellValue } from '@iasbuilt/datagrid-core';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { GridContext } from '@iasbuilt/datagrid-react';
 
 function parseRows(value: CellValue): Record<string, unknown>[] {
   if (Array.isArray(value)) return value as Record<string, unknown>[];

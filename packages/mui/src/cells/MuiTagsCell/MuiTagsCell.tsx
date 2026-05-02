@@ -7,8 +7,8 @@
 import React from 'react';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useArrayState } from '@istracked/datagrid-react';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useArrayState } from '@iasbuilt/datagrid-react';
 import { EditableAutocomplete } from '../../components';
 
 function parseTags(value: unknown): string[] {

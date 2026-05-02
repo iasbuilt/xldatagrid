@@ -1,4 +1,4 @@
-import type { ColumnDef, RowGroupConfig, RowGroup } from '@istracked/datagrid-core';
+import type { ColumnDef, RowGroupConfig, RowGroup } from '@iasbuilt/datagrid-core';
 import type { MenuState } from '../state';
 import * as styles from './DataGridToolbar.styles';
 

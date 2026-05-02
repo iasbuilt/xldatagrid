@@ -1,11 +1,11 @@
 {
-  "name": "@istracked/datagrid-playground",
+  "name": "@iasbuilt/datagrid-playground",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@istracked/datagrid-core": "workspace:*",
-    "@istracked/datagrid-react": "workspace:*",
-    "@istracked/datagrid-extensions": "workspace:*",
+    "@iasbuilt/datagrid-core": "workspace:*",
+    "@iasbuilt/datagrid-react": "workspace:*",
+    "@iasbuilt/datagrid-extensions": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

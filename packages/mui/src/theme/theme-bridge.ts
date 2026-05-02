@@ -4,8 +4,8 @@
  * Colour values are drawn from the MUI theme at call time, so host
  * applications stay in control of their own palette. The *default*
  * header-background value used when no per-mode override is supplied falls
- * back to the corresponding iAsBuilt token from `@istracked/datagrid-react`
- * (which ingests from the organisation-wide `istracked/tokens` repository)
+ * back to the corresponding iAsBuilt token from `@iasbuilt/datagrid-react`
+ * (which ingests from the organisation-wide `iasbuilt/tokens` repository)
  * so the MUI bridge cannot drift away from the source of truth.
  *
  * @module theme-bridge
@@ -13,7 +13,7 @@
  */
 
 // eslint-disable-next-line import/no-relative-packages -- in-monorepo sibling package.
-import { lightThemeTokens, darkThemeTokens } from '@istracked/datagrid-react';
+import { lightThemeTokens, darkThemeTokens } from '@iasbuilt/datagrid-react';
 
 /** Minimal MUI theme shape needed for the bridge. */
 export interface MuiThemeShape {

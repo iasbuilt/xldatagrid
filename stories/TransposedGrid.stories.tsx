@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { TransposedGrid } from '@istracked/datagrid-react';
-import type { TransposedField, CellValue } from '@istracked/datagrid-core';
+import { TransposedGrid } from '@iasbuilt/datagrid-react';
+import type { TransposedField, CellValue } from '@iasbuilt/datagrid-core';
 import { makeEmployees, departmentOptions } from './data';
 import { storyContainer, gridContainer, allCellRenderers } from './helpers';
 import * as styles from './stories.styles';

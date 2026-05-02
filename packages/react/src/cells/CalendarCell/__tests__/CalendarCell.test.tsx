@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { CalendarCell } from '../CalendarCell';
-import type { ColumnDef, CellValue } from '@istracked/datagrid-core';
+import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared helpers

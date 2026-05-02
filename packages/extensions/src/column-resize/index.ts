@@ -5,7 +5,7 @@
  *
  * @packageDocumentation
  */
-import { ExtensionDefinition, GridEvent } from '@istracked/datagrid-core';
+import { ExtensionDefinition, GridEvent } from '@iasbuilt/datagrid-core';
 
 /**
  * Configuration options for the {@link createColumnResize} extension factory.

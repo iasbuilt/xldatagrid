@@ -26,7 +26,7 @@
  */
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import type { ChromeColumnsConfig } from '@istracked/datagrid-core';
+import type { ChromeColumnsConfig } from '@iasbuilt/datagrid-core';
 import { DataGrid } from '../DataGrid';
 
 // ────────────────────────────────────────────────────────────────────────────

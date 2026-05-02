@@ -8,8 +8,8 @@
  * @module derived-atoms
  */
 import { atom, type Atom } from 'jotai/vanilla';
-import type { ColumnDef, RowKeyResolver } from '@istracked/datagrid-core';
-import { applyFiltering, applySorting, getVisibleColumns } from '@istracked/datagrid-core';
+import type { ColumnDef, RowKeyResolver } from '@iasbuilt/datagrid-core';
+import { applyFiltering, applySorting, getVisibleColumns } from '@iasbuilt/datagrid-core';
 import type { BaseAtoms } from './base-atoms';
 
 /**

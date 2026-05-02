@@ -5,7 +5,7 @@ import {
   GridConfig,
   SortState,
   FilterState,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -86,12 +86,12 @@ describe('JSON config — filtering', () => {
   it('config enables filtering when filtering is true', () => {
     // When filtering is enabled, the grid should render without error
     const { container } = renderGrid({ filtering: true });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 
   it('config disables filtering when filtering is false', () => {
     const { container } = renderGrid({ filtering: false });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 });
 
@@ -139,12 +139,12 @@ describe('JSON config — ghost row', () => {
   it('config enables ghost row when ghostRow is true', () => {
     // ghostRow=true should not cause any rendering error
     const { container } = renderGrid({ ghostRow: true });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 
   it('config disables ghost row when ghostRow is false', () => {
     const { container } = renderGrid({ ghostRow: false });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 });
 
@@ -248,7 +248,7 @@ describe('JSON config — read-only', () => {
 describe('JSON config — theme', () => {
   it('config applies theme light mode', () => {
     const { container } = renderGrid({ theme: 'light' });
-    const grid = container.querySelector('.istracked-datagrid');
+    const grid = container.querySelector('.iasbuilt-datagrid');
     expect(grid).toBeInTheDocument();
     // Light theme is the default — grid renders without custom overrides
     expect(grid).toHaveAttribute('role', 'grid');
@@ -256,7 +256,7 @@ describe('JSON config — theme', () => {
 
   it('config applies theme dark mode', () => {
     const { container } = renderGrid({ theme: 'dark' });
-    const grid = container.querySelector('.istracked-datagrid');
+    const grid = container.querySelector('.iasbuilt-datagrid');
     expect(grid).toBeInTheDocument();
     expect(grid).toHaveAttribute('role', 'grid');
   });
@@ -264,7 +264,7 @@ describe('JSON config — theme', () => {
   it('config applies custom theme properties', () => {
     const customTheme = { '--dg-row-bg': '#111', '--dg-border-color': '#333' };
     const { container } = renderGrid({ theme: customTheme });
-    const grid = container.querySelector('.istracked-datagrid');
+    const grid = container.querySelector('.iasbuilt-datagrid');
     expect(grid).toBeInTheDocument();
   });
 });
@@ -274,13 +274,13 @@ describe('JSON config — file drop', () => {
     const { container } = renderGrid({
       fileDrop: { enabled: true, accept: ['.csv'] },
     });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 
   it('config disables file drop when fileDrop not configured', () => {
     const { container } = renderGrid();
     // No fileDrop config passed — grid should still render fine
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 });
 
@@ -289,14 +289,14 @@ describe('JSON config — grouping', () => {
     const { container } = renderGrid({
       grouping: { rows: { fields: ['name'], defaultExpanded: true } },
     });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 
   it('config disables grouping when grouping is false', () => {
     const { container } = renderGrid({
       grouping: { rows: false },
     });
-    expect(container.querySelector('.istracked-datagrid')).toBeInTheDocument();
+    expect(container.querySelector('.iasbuilt-datagrid')).toBeInTheDocument();
   });
 });
 

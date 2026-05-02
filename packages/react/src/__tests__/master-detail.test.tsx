@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { MasterDetail, DetailComponentProps } from '../MasterDetail';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

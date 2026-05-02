@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 import React, { useState, useRef, useEffect } from 'react';
-import type { CellValue, ColumnDef, StatusOption } from '@istracked/datagrid-core';
+import type { CellValue, ColumnDef, StatusOption } from '@iasbuilt/datagrid-core';
 import * as styles from './StatusCell.styles';
 
 /**

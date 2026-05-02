@@ -35,7 +35,7 @@ const repoRoot = resolve(__dirname, '..', '..');
 const scriptPath = resolve(repoRoot, 'scripts', 'sync-tokens.mjs');
 
 /**
- * Build a temporary tokens fixture with the same layout as istracked/tokens.
+ * Build a temporary tokens fixture with the same layout as iasbuilt/tokens.
  * Returns the path to the fixture root.
  */
 function makeTokensFixture({ omit = [] } = {}) {

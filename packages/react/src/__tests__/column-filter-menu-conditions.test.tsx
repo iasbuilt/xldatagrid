@@ -12,7 +12,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import { FilterConditionDialog } from '../header/column-filter-menu/FilterConditionDialog';
-import type { CompositeFilterDescriptor } from '@istracked/datagrid-core';
+import type { CompositeFilterDescriptor } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

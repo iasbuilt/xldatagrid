@@ -5,13 +5,13 @@
  * @packageDocumentation
  */
 import React from 'react';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useDraftState } from '@istracked/datagrid-react';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useDraftState } from '@iasbuilt/datagrid-react';
 import {
   truncateEnd,
   truncateMiddle,
   getDefaultOverflowPolicy,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { EditableTextField, DisplayTypography } from '../../components';
 
 // Matches `TRUNCATE_MAX_CHARS` in `packages/react/src/body/DataGridBody.tsx`:

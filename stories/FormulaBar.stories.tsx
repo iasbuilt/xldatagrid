@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MuiDataGrid } from '@istracked/datagrid-mui';
-import { createFormulaBar } from '@istracked/datagrid-extensions';
-import type { FormulaBarConfig } from '@istracked/datagrid-extensions';
-import type { CellAddress, CellValue } from '@istracked/datagrid-core';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import { createFormulaBar } from '@iasbuilt/datagrid-extensions';
+import type { FormulaBarConfig } from '@iasbuilt/datagrid-extensions';
+import type { CellAddress, CellValue } from '@iasbuilt/datagrid-core';
 import { makeEmployees, defaultColumns, Employee } from './data';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';

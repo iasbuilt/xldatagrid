@@ -13,7 +13,7 @@
 import { render, act, fireEvent } from '@testing-library/react';
 import { DataGrid } from '../DataGrid';
 import { cellRendererMap } from '../cells';
-import { ColumnDef } from '@istracked/datagrid-core';
+import { ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Fixtures

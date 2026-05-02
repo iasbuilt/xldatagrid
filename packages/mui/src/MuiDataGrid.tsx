@@ -5,8 +5,8 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { DataGrid } from '@istracked/datagrid-react';
-import type { DataGridProps, CellRendererProps } from '@istracked/datagrid-react';
+import { DataGrid } from '@iasbuilt/datagrid-react';
+import type { DataGridProps, CellRendererProps } from '@iasbuilt/datagrid-react';
 import { MuiDataGridThemeProvider, MuiThemeShape } from './theme';
 import { muiCellRendererMap } from './cells';
 

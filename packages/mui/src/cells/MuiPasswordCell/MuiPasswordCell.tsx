@@ -8,8 +8,8 @@ import React, { useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Box from '@mui/material/Box';
-import type { CellRendererProps } from '@istracked/datagrid-react';
-import { useDraftState } from '@istracked/datagrid-react';
+import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { useDraftState } from '@iasbuilt/datagrid-react';
 import { EditableTextField } from '../../components';
 
 const MASK_CHAR = '\u2022';

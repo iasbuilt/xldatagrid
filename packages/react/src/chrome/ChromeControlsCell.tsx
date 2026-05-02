@@ -1,6 +1,6 @@
 import React from 'react';
 import type { CSSProperties } from 'react';
-import type { ControlAction } from '@istracked/datagrid-core';
+import type { ControlAction } from '@iasbuilt/datagrid-core';
 import * as styles from './ChromeColumn.styles';
 
 export interface ChromeControlsCellProps {

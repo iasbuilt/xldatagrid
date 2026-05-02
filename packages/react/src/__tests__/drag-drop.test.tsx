@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi } from 'vitest';
 import { DataGrid } from '../DataGrid';
-import type { FileDropConfig, ColumnDef } from '@istracked/datagrid-core';
+import type { FileDropConfig, ColumnDef } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

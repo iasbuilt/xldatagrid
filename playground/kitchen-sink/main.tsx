@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { MuiDataGrid } from '@istracked/datagrid-mui';
-import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode } from '@istracked/datagrid-core';
+import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode } from '@iasbuilt/datagrid-core';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -30,9 +30,9 @@ import * as Sections from './sections';
 // does not affect unrelated consumers — tokens only apply once we opt in by
 // tagging an ancestor element with the class/attribute below. The import comes
 // directly from the source tree via the vite alias configured in
-// `playground/vite.config.ts`, which maps `@istracked/datagrid-react` to
+// `playground/vite.config.ts`, which maps `@iasbuilt/datagrid-react` to
 // `packages/react/src`.
-import '@istracked/datagrid-react/styles/excel-365-theme.css';
+import '@iasbuilt/datagrid-react/styles/excel-365-theme.css';
 
 // ---------------------------------------------------------------------------
 // Changes for `feat/excel-365-column-menu`
@@ -479,7 +479,7 @@ function App() {
     // The `data-theme="excel365"` attribute (mirrored by the
     // `dg-theme-excel365` class) activates the Excel-365 tokens defined in
     // `packages/react/src/styles/excel-365-theme.css`. The stylesheet's
-    // selector targets `.istracked-datagrid.dg-theme-excel365`, so this
+    // selector targets `.iasbuilt-datagrid.dg-theme-excel365`, so this
     // root-level marker has no visual effect on its own — individual grid
     // wrappers are expected to carry the same class/attribute when they want
     // to opt in. Placing it here means the whole page advertises the theme

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { MuiDataGrid, muiCellRendererMap } from '@istracked/datagrid-mui';
-import { MasterDetail, TransposedGrid } from '@istracked/datagrid-react';
-import type { DetailComponentProps } from '@istracked/datagrid-react';
-import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode, TransposedField } from '@istracked/datagrid-core';
+import { MuiDataGrid, muiCellRendererMap } from '@iasbuilt/datagrid-mui';
+import { MasterDetail, TransposedGrid } from '@iasbuilt/datagrid-react';
+import type { DetailComponentProps } from '@iasbuilt/datagrid-react';
+import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode, TransposedField } from '@iasbuilt/datagrid-core';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -1357,7 +1357,7 @@ export function BackgroundIndexerSection() {
         for a column while the background indexer walks the dataset on <code>requestIdleCallback</code>
         and persists distinct values to IndexedDB (namespaced by <code>gridId</code>). Refresh
         the page — the second load hits the IndexedDB cache and the checklist is available
-        instantly. Open devtools → Application → IndexedDB → <code>istracked-datagrid-index</code>
+        instantly. Open devtools → Application → IndexedDB → <code>iasbuilt-datagrid-index</code>
         to inspect the stored payload.
       </p>
       <div style={tallGridContainer}>

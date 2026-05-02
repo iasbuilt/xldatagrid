@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { muiCellRendererMap } from '@istracked/datagrid-mui';
+import { muiCellRendererMap } from '@iasbuilt/datagrid-mui';
 
 /** MUI cell renderers — drop-in replacement for plain React renderers */
 export const allCellRenderers = muiCellRendererMap;

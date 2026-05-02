@@ -1,5 +1,5 @@
 /**
- * Public API barrel file for the `@istracked/datagrid-react` package.
+ * Public API barrel file for the `@iasbuilt/datagrid-react` package.
  *
  * Re-exports all user-facing components, hooks, factory functions, type
  * aliases, and slot components so consumers can import everything from

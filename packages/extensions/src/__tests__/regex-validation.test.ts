@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { createRegexValidation, RegexRule, RegexValidationConfig } from '../regex-validation';
-import type { GridEvent } from '@istracked/datagrid-core';
+import type { GridEvent } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Helpers

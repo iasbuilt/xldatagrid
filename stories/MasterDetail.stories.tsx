@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { MasterDetail } from '@istracked/datagrid-react';
-import type { DetailComponentProps } from '@istracked/datagrid-react';
+import { MasterDetail } from '@iasbuilt/datagrid-react';
+import type { DetailComponentProps } from '@iasbuilt/datagrid-react';
 import { makeEmployees, defaultColumns, Employee } from './data';
 import { allCellRenderers, storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';

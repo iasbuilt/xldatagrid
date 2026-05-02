@@ -1,5 +1,5 @@
 {
-  "name": "@istracked/datagrid-monorepo",
+  "name": "@iasbuilt/datagrid-monorepo",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "engines": {

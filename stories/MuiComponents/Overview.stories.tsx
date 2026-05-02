@@ -29,7 +29,7 @@ export const Index: StoryObj = {
     docs: {
       description: {
         story:
-          'Telerik-style per-component showcase of every MUI component consumed by @istracked/datagrid-mui. Pick a component from the sidebar to see its variants.',
+          'Telerik-style per-component showcase of every MUI component consumed by @iasbuilt/datagrid-mui. Pick a component from the sidebar to see its variants.',
       },
     },
   },

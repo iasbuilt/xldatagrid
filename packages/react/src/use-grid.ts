@@ -13,8 +13,8 @@
  * @module use-grid
  */
 import { useMemo, useRef, useEffect } from 'react';
-import type { GridConfig, GridModel } from '@istracked/datagrid-core';
-import { createColumnState } from '@istracked/datagrid-core';
+import type { GridConfig, GridModel } from '@iasbuilt/datagrid-core';
+import { createColumnState } from '@iasbuilt/datagrid-core';
 import { createAtomicGridModel, type AtomicGridBundle, type AtomicStore } from './atomic-grid-model';
 import type { GridAtomSystem } from './atoms';
 

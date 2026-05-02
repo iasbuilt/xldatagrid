@@ -1,6 +1,6 @@
 /**
- * Guard test that pins the `@istracked/datagrid-react` public API contract
- * for the cell-editor hooks consumed by `@istracked/datagrid-mui`.
+ * Guard test that pins the `@iasbuilt/datagrid-react` public API contract
+ * for the cell-editor hooks consumed by `@iasbuilt/datagrid-mui`.
  *
  * The three named exports asserted below (`useDraftState`, `useSelectState`,
  * `useArrayState`) back every built-in and third-party cell renderer; moving
@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import * as publicApi from '../index';
 
-describe('@istracked/datagrid-react public hook exports', () => {
+describe('@iasbuilt/datagrid-react public hook exports', () => {
   it('exposes useDraftState as a named export', () => {
     expect(typeof publicApi.useDraftState).toBe('function');
   });

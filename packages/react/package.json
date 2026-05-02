@@ -1,5 +1,5 @@
 {
-  "name": "@istracked/datagrid-react",
+  "name": "@iasbuilt/datagrid-react",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -19,7 +19,7 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@istracked/datagrid-core": "workspace:*",
+    "@iasbuilt/datagrid-core": "workspace:*",
     "dompurify": "^3.2.4",
     "jotai": "^2.12.3",
     "react-markdown": "^10.1.0",

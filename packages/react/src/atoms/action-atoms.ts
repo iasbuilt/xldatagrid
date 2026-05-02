@@ -24,7 +24,7 @@ import type {
   FilterState,
   ColumnDef,
   RowKeyResolver,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import {
   applySorting,
   toggleSort,
@@ -50,7 +50,7 @@ import {
   undo as undoOp,
   redo as redoOp,
   type EventBus,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import type { BaseAtoms } from './base-atoms';
 import type { DerivedAtoms } from './derived-atoms';
 
@@ -179,7 +179,7 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
 
       // Create a command that stores field/index/values for atom-aware undo/redo.
       // We attach metadata so the undoAtom can apply changes immutably.
-      const cmd: import('@istracked/datagrid-core').Command & { _atomMeta?: any } = {
+      const cmd: import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any } = {
         type: 'cell:edit',
         timestamp: Date.now(),
         description: `Edit ${cell.field}`,
@@ -245,7 +245,7 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
           newData[rowIndex] = newRow;
 
           // Record the edit command with _atomMeta for immutable undo/redo.
-          const cmd: import('@istracked/datagrid-core').Command & { _atomMeta?: any } = {
+          const cmd: import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any } = {
             type: 'cell:edit',
             timestamp: Date.now(),
             description: `Edit ${result.cell.field}`,
@@ -299,7 +299,7 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
 
       // Record the insertion with _atomMeta so undo can remove the row
       // and redo can re-insert it at the same position.
-      const cmd: import('@istracked/datagrid-core').Command & { _atomMeta?: any } = {
+      const cmd: import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any } = {
         type: 'row:insert',
         timestamp: Date.now(),
         description: 'Insert row',
@@ -336,13 +336,13 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
 
       let newData = [...data];
       let undoRedo = get(baseAtoms.undoRedoAtom);
-      const subcmds: (import('@istracked/datagrid-core').Command & { _atomMeta?: any })[] = [];
+      const subcmds: (import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any })[] = [];
 
       // Process deletions one at a time (descending) to keep indices valid.
       for (const { index } of entries) {
         const row = newData[index];
         if (!row) continue;
-        const cmd: import('@istracked/datagrid-core').Command & { _atomMeta?: any } = {
+        const cmd: import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any } = {
           type: 'row:delete',
           timestamp: Date.now(),
           description: 'Delete row',
@@ -578,7 +578,7 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
   function applyCommandToData(
     get: (atom: any) => any,
     set: (atom: any, ...args: any[]) => void,
-    cmd: import('@istracked/datagrid-core').Command & { _atomMeta?: any },
+    cmd: import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any },
     direction: 'undo' | 'redo',
   ) {
     const meta = cmd._atomMeta;
@@ -615,7 +615,7 @@ export function createActionAtoms<TData extends Record<string, unknown>>(
     } else if (meta?.kind === 'batch') {
       // Batch commands must be replayed in reverse order when undoing
       // so that index-sensitive operations (splices) remain valid.
-      const cmds = meta.commands as (import('@istracked/datagrid-core').Command & { _atomMeta?: any })[];
+      const cmds = meta.commands as (import('@iasbuilt/datagrid-core').Command & { _atomMeta?: any })[];
       const ordered = direction === 'undo' ? [...cmds].reverse() : cmds;
       for (const sub of ordered) applyCommandToData(get, set, sub, direction);
     } else {

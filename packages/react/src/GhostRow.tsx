@@ -9,8 +9,8 @@
  * @module GhostRow
  */
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { ColumnDef, CellValue, GhostRowConfig, GhostRowPosition, ValidationResult, runValidators, mostSevere } from '@istracked/datagrid-core';
-import { GridModel } from '@istracked/datagrid-core';
+import { ColumnDef, CellValue, GhostRowConfig, GhostRowPosition, ValidationResult, runValidators, mostSevere } from '@iasbuilt/datagrid-core';
+import { GridModel } from '@iasbuilt/datagrid-core';
 import * as styles from './GhostRow.styles';
 
 /**

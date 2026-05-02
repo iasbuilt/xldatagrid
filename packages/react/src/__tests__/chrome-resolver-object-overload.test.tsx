@@ -33,7 +33,7 @@ import type {
   RowBorderStyle,
   ChromeCellContent,
   ColumnDef,
-} from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
 import { DataGrid } from '../DataGrid';
 
 type TestRow = { id: string; name: string; value: number };

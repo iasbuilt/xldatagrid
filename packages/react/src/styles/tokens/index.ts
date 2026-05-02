@@ -2,7 +2,7 @@
  * Theme-token ingestion for the datagrid.
  *
  * The organisation-wide source of truth for the iAsBuilt palette lives in the
- * `istracked/tokens` repository. `scripts/sync-tokens.mjs` copies the built
+ * `iasbuilt/tokens` repository. `scripts/sync-tokens.mjs` copies the built
  * JSON artefacts from that repository into this directory; this module then
  * projects the relevant leaves of the W3C-design-token tree onto the
  * `--dg-*` CSS custom properties that the grid's inline styles and
@@ -52,7 +52,7 @@ function resolveToken(tree: TokenTree, path: string): string {
     const next: TokenLeaf | TokenTree | undefined = cursor[part];
     if (next === undefined) {
       throw new Error(`Token path "${path}" is not present in the ingested tokens. ` +
-        `Re-run scripts/sync-tokens.mjs from an up-to-date istracked/tokens checkout.`);
+        `Re-run scripts/sync-tokens.mjs from an up-to-date iasbuilt/tokens checkout.`);
     }
     cursor = next;
   }

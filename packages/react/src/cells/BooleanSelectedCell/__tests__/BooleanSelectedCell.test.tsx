@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
-import type { ColumnDef } from '@istracked/datagrid-core';
+import type { ColumnDef } from '@iasbuilt/datagrid-core';
 import {
   BooleanSelectedCell,
   SELECTED_LABEL,

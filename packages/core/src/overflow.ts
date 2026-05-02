@@ -3,7 +3,7 @@
  *
  * This module defines the framework-agnostic vocabulary used by the grid to
  * decide how cell text is rendered when the value is wider than the column.
- * Rendering adapters (notably `@istracked/datagrid-react`) consume these types
+ * Rendering adapters (notably `@iasbuilt/datagrid-react`) consume these types
  * and helpers to drive CSS class selection, reveal-mechanism wiring, and
  * density-aware row heights.
  *

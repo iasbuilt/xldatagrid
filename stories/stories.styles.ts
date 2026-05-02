@@ -140,12 +140,12 @@ export const masterDetailPre: CSSProperties = {
 // Theming story
 // ---------------------------------------------------------------------------
 
-// Palette values below are pulled from the ingested `istracked/tokens`
+// Palette values below are pulled from the ingested `iasbuilt/tokens`
 // presets (`darkThemeTokens` / `lightThemeTokens`) so the Theming story
 // wrappers frame each grid in the same chrome colours the grid itself
 // paints from. Updating the token repo and re-running `pnpm sync:tokens`
 // will flow through here automatically.
-import { darkThemeTokens, lightThemeTokens } from '@istracked/datagrid-react';
+import { darkThemeTokens, lightThemeTokens } from '@iasbuilt/datagrid-react';
 
 const darkRowBg = darkThemeTokens['--dg-row-bg'] ?? '#0f172a';
 const darkTextColor = darkThemeTokens['--dg-text-color'] ?? '#f1f5f9';

@@ -17,8 +17,8 @@ import {
   ColumnDef,
   FilterState,
   CellValue,
-} from '@istracked/datagrid-core';
-import { applyFiltering } from '@istracked/datagrid-core';
+} from '@iasbuilt/datagrid-core';
+import { applyFiltering } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Config & types

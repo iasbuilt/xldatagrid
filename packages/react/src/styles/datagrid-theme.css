@@ -2,7 +2,7 @@
  * Declarative theme layer for the datagrid.
  *
  * Colour values in this file mirror the palette exposed by the
- * `istracked/tokens` repository — the organisation-wide source of truth —
+ * `iasbuilt/tokens` repository — the organisation-wide source of truth —
  * as ingested into `./tokens/{light,dark}.json` by `scripts/sync-tokens.mjs`.
  * If these values drift from the JSON snapshot it is almost certainly because
  * the sync script needs to be re-run after a tokens-repo upgrade.
@@ -17,8 +17,8 @@
 @import url('./excel-365-theme.css');
 
 /* Light theme — values mirror tokens/light.json (color.datagrid.*) */
-.istracked-datagrid[data-theme="light"],
-.istracked-datagrid.dg-theme-light {
+.iasbuilt-datagrid[data-theme="light"],
+.iasbuilt-datagrid.dg-theme-light {
   --dg-primary-color: #3B82F6;
   --dg-bg-color: #FFFFFF;
   --dg-text-color: #0F172A;
@@ -60,12 +60,12 @@
  * `--dg-row-bg-alt` and fell back to hard-coded light values. That is the
  * root cause of issue #17's "row bg unchanged" bug.
  */
-.istracked-datagrid[data-theme="dark"],
-.istracked-datagrid.dg-theme-dark,
+.iasbuilt-datagrid[data-theme="dark"],
+.iasbuilt-datagrid.dg-theme-dark,
 /* Allow an ancestor (html/body) `data-theme="dark"` to cascade into an
  * otherwise-unthemed grid instance. This lets a host app toggle dark mode at
  * the document level without threading `theme="dark"` through every grid. */
-[data-theme="dark"] .istracked-datagrid:not([data-theme="light"]):not(.dg-theme-light) {
+[data-theme="dark"] .iasbuilt-datagrid:not([data-theme="light"]):not(.dg-theme-light) {
   --dg-primary-color: #62A0EA;
   --dg-bg-color: #0F172A;
   --dg-text-color: #F1F5F9;
@@ -103,7 +103,7 @@
  * resting header, in dark mode one step brighter. `!important` is needed
  * because the header cell factory already sets `background` inline via
  * `CSSProperties`, which would otherwise win over plain stylesheet rules. */
-.istracked-datagrid[data-row-selected="true"] [role="columnheader"] {
+.iasbuilt-datagrid[data-row-selected="true"] [role="columnheader"] {
   background: var(--dg-header-selected-bg, #CBD5E1) !important;
 }
 

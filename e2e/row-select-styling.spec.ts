@@ -29,7 +29,14 @@ const STORY_URL =
   '/iframe.html?viewMode=story&id=examples-chrome-columns--row-numbers-only';
 
 async function waitForGrid(page: Page): Promise<void> {
-  await page.locator('[role="grid"]').first().waitFor({ state: 'visible' });
+  // Storybook cold-start with the MUI + chrome stack can exceed the default
+  // 7.5s actionTimeout on a chilly local box, so widen the visibility wait
+  // here. The grid render itself is sub-second once the bundle is hot; this
+  // only matters on the first navigation of a worker.
+  await page
+    .locator('[role="grid"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 function parseRgba(s: string): [number, number, number, number] | null {

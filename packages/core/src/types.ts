@@ -1,5 +1,6 @@
 import type { Validator } from './validators';
 import type { OverflowPolicy, Density } from './overflow';
+import type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
 
 /**
  * Core type definitions for the datagrid system.
@@ -273,8 +274,30 @@ export interface ColumnDef<TData = Record<string, unknown>> {
   allowFreeText?: boolean;
   /** Placeholder text shown in empty cells. */
   placeholder?: string;
-  /** Display format string for `calendar` and `currency` columns. */
-  format?: string;
+  /**
+   * Display format for `numeric`, `calendar`, and `currency` columns.
+   *
+   * For numeric columns, accepts either:
+   * - the legacy shorthand string `'thousands'` (locale grouping separator);
+   * - a {@link NumberFormatSpec} object selecting an Excel-style preset
+   *   (`currency`, `percent`, `accounting`, `scientific`, `fixed`); or
+   * - a plain mask string forwarded to `calendar` / `currency` renderers
+   *   (e.g. `'YYYY-MM-DD'`, `'USD'`).
+   *
+   * See {@link formatNumber} for the runtime semantics of the object form.
+   */
+  format?: string | NumberFormatSpec;
+  /**
+   * Optional dual-unit sub-cell rendered below the primary value on
+   * `numeric` columns. The cell shows the primary value on the first line
+   * and a smaller, read-only converted value on a second line (e.g.
+   * `100 kg / 220.46 lb`). Edit mode is unchanged — only the primary value
+   * is editable; the secondary line is presentation-only and recomputed via
+   * the supplied `conversion` formula on every render.
+   *
+   * See {@link SecondaryUnitSpec} for the field contract.
+   */
+  secondaryUnit?: SecondaryUnitSpec;
   /** Minimum allowed numeric value for `numeric` columns. */
   min?: number;
   /** Maximum allowed numeric value for `numeric` columns. */

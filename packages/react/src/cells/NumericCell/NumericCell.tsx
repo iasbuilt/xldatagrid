@@ -10,6 +10,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
+import { formatNumber, isNumberFormatSpec } from '@iasbuilt/datagrid-core';
 import * as styles from './NumericCell.styles';
 
 /**
@@ -38,18 +39,22 @@ interface NumericCellProps<TData = Record<string, unknown>> {
  * Converts a cell value to a human-readable numeric string.
  *
  * Returns an empty string for null, undefined, empty-string, or NaN inputs.
- * When `useThousands` is true the number is locale-formatted with grouping
- * separators; otherwise a plain `String()` conversion is used.
+ * Delegates to {@link formatNumber} when the column declares an Excel-style
+ * format spec; otherwise falls back to `Number.toLocaleString()` when
+ * thousands grouping is requested or a plain `String()` conversion.
  *
- * @param value - The raw cell value to format.
- * @param useThousands - Whether to apply locale-based thousands grouping.
+ * @param value  - The raw cell value to format.
+ * @param format - The column's `format` field; may be a spec object,
+ *                 the `'thousands'` shorthand, or any other string (in
+ *                 which case it is ignored for numeric columns).
  * @returns The formatted numeric string, or `""` when the value is not a valid number.
  */
-function formatNumeric(value: CellValue, useThousands: boolean): string {
+export function formatNumeric(value: CellValue, format: ColumnDef['format']): string {
   if (value === null || value === undefined || value === '') return '';
   const num = Number(value);
   if (isNaN(num)) return '';
-  return useThousands ? num.toLocaleString() : String(num);
+  if (isNumberFormatSpec(format)) return formatNumber(num, format);
+  return String(num);
 }
 
 /**
@@ -87,10 +92,22 @@ export const NumericCell = React.memo(function NumericCell<TData = Record<string
   onCommit,
   onCancel,
 }: NumericCellProps<TData>) {
-  // Determine whether the thousands separator should be applied
-  // based on the column's format string.
-  const useThousands = column.format === 'thousands';
-  const displayValue = formatNumeric(value, useThousands);
+  // Resolve the display string from the column's `format` spec, supporting
+  // both the legacy `'thousands'` shorthand and the discriminated-union
+  // {@link NumberFormatSpec} object form added for issue #92.
+  const displayValue = formatNumeric(value, column.format);
+  // Optional dual-unit sub-cell (issue #92): rendered below the primary
+  // value when the column declares `secondaryUnit`, and only when the
+  // primary value is a finite number we can run the conversion on.
+  const numericValue = (() => {
+    if (value === null || value === undefined || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  })();
+  const secondary = column.secondaryUnit;
+  const secondaryDisplay = secondary && numericValue !== null
+    ? `${formatNumeric(secondary.conversion(numericValue), secondary.format) || String(secondary.conversion(numericValue))} ${secondary.label}`
+    : null;
   const rawValue = value === null || value === undefined ? '' : String(value);
   const [draft, setDraft] = useState(rawValue);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,6 +127,17 @@ export const NumericCell = React.memo(function NumericCell<TData = Record<string
 
   // --- Display mode ---
   if (!isEditing) {
+    if (secondaryDisplay !== null) {
+      // Dual-unit sub-cell: primary value on the first line, smaller
+      // muted secondary value on a second line below. The container
+      // keeps the column's existing right-aligned numeric layout.
+      return (
+        <span style={styles.dualUnitContainer} data-testid="numeric-dual-unit">
+          <span style={styles.displayValue} data-testid="numeric-primary">{displayValue}</span>
+          <span style={styles.secondaryValue} data-testid="numeric-secondary">{secondaryDisplay}</span>
+        </span>
+      );
+    }
     return (
       <span style={styles.displayValue}>
         {displayValue}

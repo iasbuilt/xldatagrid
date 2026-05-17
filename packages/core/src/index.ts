@@ -71,6 +71,9 @@ export * from './search-index';
 // Cell text overflow policy vocabulary + default policy resolver and middle-truncation helper.
 export type { OverflowPolicy, Density } from './overflow';
 export { truncateMiddle, truncateEnd, getDefaultOverflowPolicy } from './overflow';
+// Excel-style number-format presets + dual-unit sub-cell spec (issue #92).
+export type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
+export { formatNumber, isNumberFormatSpec } from './number-format';
 
 // Re-exports of the causl primitives core depends on, so SPA integrators
 // who want BYO-graph composition (`createGridModel({ graph })` +

@@ -44,7 +44,11 @@ export const MuiCurrencyCell = React.memo(function MuiCurrencyCell<TData = Recor
   onCommit,
   onCancel,
 }: CellRendererProps<TData>) {
-  const { symbol, negativeRed } = parseCurrencyFormat(column.format);
+  // `column.format` may be either a legacy mask string ("USD", "EUR:€:no-red")
+  // or a NumberFormatSpec object (issue #92, numeric columns only). Currency
+  // cells continue to consume the mask form; ignore the object form here.
+  const rawFormat = typeof column.format === 'string' ? column.format : undefined;
+  const { symbol, negativeRed } = parseCurrencyFormat(rawFormat);
   const numericValue = value === null || value === undefined ? '' : String(value);
 
   const commitTransform = (raw: string): unknown => {

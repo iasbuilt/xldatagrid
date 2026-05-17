@@ -2,7 +2,9 @@
  * Per-cell validation tooltip rendered via a React portal into `document.body`.
  *
  * Rendering contract (enforced by
- * `packages/react/src/__tests__/validation-tooltip.test.tsx`):
+ * `packages/react/src/__tests__/validation-tooltip.test.tsx` and the e2e
+ * suites `e2e/validation-tooltip.spec.ts` /
+ * `e2e/issue-78-validation-tooltip-severity.spec.ts`):
  *
  *   - The tooltip node lives on `document.body`, never inside the grid
  *     container. Portal target is the document body so the overlay can escape
@@ -14,18 +16,25 @@
  *     lookup even when the tooltip is visually dismissed.
  *   - Each result renders as a `<div data-validation-message>{message}</div>`
  *     child. The caller is responsible for ordering the results the way the
- *     UI wants — errors first, then warnings, then infos — so this component
+ *     UI wants (errors first, then warnings, then infos) so this component
  *     stays a pure renderer.
  *   - `data-validation-severity` reflects the most-severe entry so callers
- *     can style by severity (e.g. red border for `error`, yellow for
- *     `warning`). Paired with `data-validation-target` it lets tests and
- *     consumers address a specific cell's tooltip without relying on the
- *     React tree.
+ *     can style by severity (e.g. red background for `error`, yellow for
+ *     `warning`, blue for `info`). Paired with `data-validation-target` it
+ *     lets tests and consumers address a specific cell's tooltip without
+ *     relying on the React tree.
  *   - A single `<span data-icon="<severity>">` glyph is rendered before the
- *     messages block, reflecting the most-severe entry. Consumers can target
- *     `[data-icon="error" | "warning" | "info"]` to swap in a bespoke SVG;
- *     the built-in glyph is a unicode fallback so the tooltip still reads
- *     as severity-tagged without any icon-font dependency.
+ *     messages block, reflecting the most-severe entry. Issue #78 swapped
+ *     the legacy Unicode fallback for an inline SVG glyph (circle-X /
+ *     triangle-! / circle-i) so the tooltip reads as a true severity badge
+ *     even when the host application has not loaded an icon-font sprite.
+ *     The wrapping `[data-icon="..."]` selector is preserved so existing
+ *     consumers (CSS overrides, Playwright assertions) keep working.
+ *   - The portal background is driven by the severity-keyed token chain
+ *     `--dg-validation-{error,warning,info}-bg`, falling back to the
+ *     legacy `--dg-{error,warning,info}-color` aliases and finally to
+ *     Tailwind-style red-500 / amber-500 / blue-500 literals so the tooltip
+ *     stays in the right hue family even when no theme preset is wired up.
  *
  * @module ValidationTooltip
  */
@@ -46,24 +55,78 @@ export interface ValidationTooltipProps {
   severity: ValidationSeverity | null;
 }
 
-// Severity → background colour token. Consumers can override by supplying
-// their own CSS for `[data-validation-severity="error"]` / `="warning"` /
-// `="info"` — these fallbacks match the existing `--dg-*-color` tokens.
+// Severity to portal-surface colour. Layered fallback chain so consumers can
+// either set the issue-78-aligned tokens directly OR keep using the legacy
+// `--dg-{error,warning,info}-color` aliases without breakage; the literal
+// hex anchors the hue family when no theme is wired up at all (matching the
+// hue-family probes in `e2e/validation-tooltip.spec.ts`).
 const SEVERITY_BG: Record<ValidationSeverity, string> = {
-  error: 'var(--dg-error-color, #ef4444)',
-  warning: 'var(--dg-warning-color, #f59e0b)',
-  info: 'var(--dg-info-color, #3b82f6)',
+  error: 'var(--dg-validation-error-bg, var(--dg-error-color, #ef4444))',
+  warning: 'var(--dg-validation-warning-bg, var(--dg-warning-color, #f59e0b))',
+  info: 'var(--dg-validation-info-bg, var(--dg-info-color, #3b82f6))',
 };
 
-// Severity → unicode glyph used as the default icon. Consumers can override
-// by styling/replacing `[data-icon="<severity>"]` via portal CSS; the
-// `data-icon` attribute is the load-bearing contract so tests and external
-// icon swaps keep working either way.
-const SEVERITY_ICON: Record<ValidationSeverity, string> = {
-  error: '\u2716', // HEAVY MULTIPLICATION X — reads as "error" without an icon font.
-  warning: '\u26A0', // WARNING SIGN.
-  info: '\u2139', // INFORMATION SOURCE.
+// Severity to icon foreground colour. Defaults to white so the SVG glyph
+// stays legible against the saturated severity surface; consumers can
+// override via `--dg-validation-{error,warning,info}-icon`.
+const SEVERITY_ICON_COLOUR: Record<ValidationSeverity, string> = {
+  error: 'var(--dg-validation-error-icon, #ffffff)',
+  warning: 'var(--dg-validation-warning-icon, #ffffff)',
+  info: 'var(--dg-validation-info-icon, #ffffff)',
 };
+
+/**
+ * Inline-SVG severity glyph rendered inside `[data-icon="<severity>"]`.
+ *
+ * Issue #78 calls for a real iconographic glyph (circle-X / triangle-! /
+ * circle-i) rather than the previous Unicode fallback so the tooltip reads
+ * as a true severity badge even when the host application has not loaded an
+ * icon-font sprite. The wrapping `<span data-icon="...">` stays in place so
+ * the load-bearing CSS / test selector contract is preserved; consumers
+ * swapping in a bespoke icon can target `[data-icon="..."] > svg` without
+ * losing the data-attribute hook.
+ */
+function SeverityGlyph({ severity }: { severity: ValidationSeverity }): React.JSX.Element {
+  const stroke = SEVERITY_ICON_COLOUR[severity];
+  const common = {
+    width: 12,
+    height: 12,
+    viewBox: '0 0 16 16',
+    fill: 'none',
+    stroke,
+    strokeWidth: 2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+    focusable: false,
+  };
+  if (severity === 'error') {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="8" r="6.5" />
+        <line x1="5.5" y1="5.5" x2="10.5" y2="10.5" />
+        <line x1="10.5" y1="5.5" x2="5.5" y2="10.5" />
+      </svg>
+    );
+  }
+  if (severity === 'warning') {
+    return (
+      <svg {...common}>
+        <path d="M8 2 L14.5 13.5 L1.5 13.5 Z" />
+        <line x1="8" y1="6" x2="8" y2="9.5" />
+        <line x1="8" y1="11.5" x2="8.01" y2="11.5" />
+      </svg>
+    );
+  }
+  // info
+  return (
+    <svg {...common}>
+      <circle cx="8" cy="8" r="6.5" />
+      <line x1="8" y1="7" x2="8" y2="11.5" />
+      <line x1="8" y1="4.6" x2="8.01" y2="4.6" />
+    </svg>
+  );
+}
 
 /**
  * Renders a single portal tooltip for a validated cell.
@@ -103,16 +166,22 @@ export function ValidationTooltip(props: ValidationTooltipProps): React.ReactPor
         lineHeight: 1.4,
         maxWidth: 260,
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         gap: 6,
       }}
     >
       <span
         data-icon={iconSeverity}
         aria-hidden="true"
-        style={{ flexShrink: 0, lineHeight: 1, fontSize: 14 }}
+        style={{
+          flexShrink: 0,
+          lineHeight: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        {SEVERITY_ICON[iconSeverity]}
+        <SeverityGlyph severity={iconSeverity} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         {results.map((r, i) => (

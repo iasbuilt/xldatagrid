@@ -37,7 +37,14 @@ const STORY_URL =
   '/iframe.html?viewMode=story&id=examples-validation-tooltip--default';
 
 async function waitForGrid(page: Page): Promise<void> {
-  await page.locator('[role="grid"]').first().waitFor({ state: 'visible' });
+  // Storybook in `--ci` mode lazy-compiles stories on first navigation, so
+  // the first hit to a given iframe URL can take noticeably longer than the
+  // default 7.5s expect timeout. Give the grid a generous 30s window so the
+  // suite is not flaky when run in isolation against a cold Storybook.
+  await page
+    .locator('[role="grid"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 // RGB parser: getComputedStyle emits colours as `rgb(r, g, b)` or
@@ -81,8 +88,12 @@ async function tooltipFor(page: Page, rowId: string, field: string) {
 }
 
 test.describe('Validation tooltip — portal + severity styling', () => {
+  // Bump the per-test budget so first-hit Storybook compile + the 30s grid
+  // wait above do not bust through the default 30s test timeout.
+  test.setTimeout(90_000);
+
   test.beforeEach(async ({ page }) => {
-    await page.goto(STORY_URL);
+    await page.goto(STORY_URL, { timeout: 60_000 });
     await waitForGrid(page);
   });
 

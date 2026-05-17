@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@causl/core": "^0.3.0",
     "@iasbuilt/datagrid-core": "workspace:*",
     "@iasbuilt/datagrid-react": "workspace:*",
     "@iasbuilt/datagrid-extensions": "workspace:*",

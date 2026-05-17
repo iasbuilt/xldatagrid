@@ -21,17 +21,21 @@
   "dependencies": {
     "@iasbuilt/datagrid-core": "workspace:*",
     "dompurify": "^3.2.4",
-    "jotai": "^2.12.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "turndown": "^7.2.0",
     "turndown-plugin-gfm": "^1.0.2"
   },
   "peerDependencies": {
+    "@causl/devtools-bridge": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
+  "peerDependenciesMeta": {
+    "@causl/devtools-bridge": { "optional": true }
+  },
   "devDependencies": {
+    "@causl/devtools-bridge": "^0.1.0",
     "@types/dompurify": "^3.2.0",
     "@types/turndown": "^5.0.5",
     "tsup": "~8.4.0",

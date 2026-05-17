@@ -303,8 +303,14 @@ export function useDragDrop<TData extends Record<string, unknown>>(
           model.insertRow(model.getProcessedData().length, rowData);
         }
       } else if (target.type === 'cell' && target.field && target.rowId) {
-        // Cell-level drop: set the cell value to the file name.
-        model.setCellValue({ rowId: target.rowId, field: target.field }, file.name);
+        // Cell-level drop: set the cell value to the file name. `target.field`
+        // is `string` from the drop-handler signature; cast to the tightened
+        // GridModel.setCellValue<F> shape (the field is by definition a key
+        // of TData since the user dragged onto a real column).
+        model.setCellValue(
+          { rowId: target.rowId, field: target.field as Extract<keyof TData, string> },
+          file.name as TData[Extract<keyof TData, string>],
+        );
 
         // Check if this is a sub-grid cell that needs a nested row.
         if (config.cellDrop?.subGridField && target.field === config.cellDrop.subGridField) {

@@ -64,6 +64,30 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
 
   // Normalise the config: boolean `true` becomes an empty config object
   const ghostConfig: GhostRowConfig<TData> = typeof config === 'object' ? config : {};
+
+  /**
+   * Coerce raw string values from `<input type="text">` into the typed
+   * value the column's `cellType` declares. Required since the core's
+   * `dataNode` invariant (`@causl/core` ≥ 0.2.1) rejects commits
+   * containing strings in numeric/boolean columns — paired with
+   * `iasbuilt/xldatagrid#104` (typed `setCellValue<F>`) to close the
+   * "gigantic salary" bug class at every entry point.
+   */
+  const coerceRowFields = (raw: Record<string, unknown>): Record<string, unknown> => {
+    const out: Record<string, unknown> = { ...raw };
+    for (const c of columns) {
+      const f = c.field;
+      const v = raw[f];
+      if (v == null || v === '') continue;
+      if (c.cellType === 'numeric' || c.cellType === 'currency') {
+        const n = Number(v);
+        if (Number.isFinite(n)) out[f] = n;
+      } else if (c.cellType === 'boolean') {
+        out[f] = v === true || v === 'true' || v === '1' || v === 'on';
+      }
+    }
+    return out;
+  };
   // Merge positional/sticky preferences with defaults
   const position: GhostRowPosition = positionProp ?? ghostConfig.position ?? 'bottom';
   const sticky = stickyProp ?? ghostConfig.sticky ?? false;
@@ -143,9 +167,8 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
       return false;
     }
 
-    // Create the row
-    const rowData: Record<string, unknown> = { ...defaultValues, ...values };
-    // Generate a unique id
+    // Create the row, coercing string `<input>` values per cellType.
+    const rowData = coerceRowFields({ ...defaultValues, ...values });
     rowData.id = rowData.id ?? `ghost-${Date.now()}`;
     const dataLen = model.getProcessedData().length;
     model.insertRow(dataLen, rowData);
@@ -263,10 +286,11 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
           firstRowData[col.field] = cell.trim();
         }
       });
-      firstRowData.id = firstRowData.id ?? `ghost-${Date.now()}`;
+      const firstCoerced = coerceRowFields(firstRowData);
+      firstCoerced.id = firstCoerced.id ?? `ghost-${Date.now()}`;
       const dataLen = model.getProcessedData().length;
-      model.insertRow(dataLen, firstRowData);
-      onRowAdd?.(firstRowData as Partial<TData>);
+      model.insertRow(dataLen, firstCoerced);
+      onRowAdd?.(firstCoerced as Partial<TData>);
 
       // Additional rows
       for (let r = 1; r < lines.length; r++) {
@@ -281,10 +305,11 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
             rowData[col.field] = cell.trim();
           }
         });
-        rowData.id = rowData.id ?? `ghost-${Date.now()}-${r}`;
+        const coerced = coerceRowFields(rowData);
+        coerced.id = coerced.id ?? `ghost-${Date.now()}-${r}`;
         const currentLen = model.getProcessedData().length;
-        model.insertRow(currentLen, rowData);
-        onRowAdd?.(rowData as Partial<TData>);
+        model.insertRow(currentLen, coerced);
+        onRowAdd?.(coerced as Partial<TData>);
       }
 
       resetGhostRow();

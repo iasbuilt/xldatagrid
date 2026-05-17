@@ -97,7 +97,12 @@ describe('Ghost Row', () => {
     expect(onRowAdd).toHaveBeenCalledTimes(1);
     const addedData = onRowAdd.mock.calls[0]![0];
     expect(addedData.name).toBe('NewPerson');
-    expect(addedData.age).toBe('42');
+    // After the @causl/core@0.2.1 invariant landed, ghost-row commits
+    // coerce string `<input>` values per the column's declared cellType.
+    // The 'age' column has cellType:'numeric', so the typed value is a
+    // number (was: '42' string — the latent bug iasbuilt/xldatagrid#103
+    // surfaced).
+    expect(addedData.age).toBe(42);
   });
 
   it('ghost row new row appears above ghost row', () => {
@@ -144,8 +149,10 @@ describe('Ghost Row', () => {
     fireEvent.change(allInputs[1]!, { target: { value: '28' } });
     fireEvent.keyDown(allInputs[1]!, { key: 'Enter' });
 
+    // age coerced to number per cellType: 'numeric' (see related test
+    // above for the @causl/core@0.2.1 invariant context).
     expect(onRowAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Dana', age: '28' })
+      expect.objectContaining({ name: 'Dana', age: 28 })
     );
   });
 

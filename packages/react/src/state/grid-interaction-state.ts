@@ -114,6 +114,11 @@ export function gridInteractionReducer(
       };
 
     case 'close-menu':
+      // Short-circuit when no menu is open — returning prev state lets the
+      // causl-backed `dispatch` skip the commit entirely (and useReducer
+      // skips the re-render), avoiding noise commits like the menu-closes-
+      // on-outside-click handler firing once per click in a no-op scenario.
+      if (state.menu.type === 'closed') return state;
       return {
         ...state,
         menu: { type: 'closed' },

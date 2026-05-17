@@ -85,6 +85,33 @@ function renderCellValue(value: CellValue, cellType: CellType): string {
 // Helper: validation key
 // ---------------------------------------------------------------------------
 
+/**
+ * Coerce the raw `<input>` string value into the storage type the column
+ * expects, based on `column.cellType`. Numeric/currency/number columns
+ * commit numbers; boolean columns commit booleans; everything else stays
+ * as a string.
+ *
+ * Without this coercion, editing a numeric cell stores the string `"44"`
+ * instead of the number `44`, which makes downstream `sum + cell` use
+ * string concatenation rather than addition — observed as catastrophic
+ * "gigantic number" totals in app-side aggregates over the grid.
+ */
+function coerceCellValueForColumn(
+  col: { cellType?: CellType },
+  raw: string,
+): CellValue {
+  const t = col.cellType;
+  if (t === 'numeric' || t === 'currency') {
+    if (raw === '' || raw == null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : raw;
+  }
+  if (t === 'boolean') {
+    return raw === 'true' || raw === '1' || raw === 'on';
+  }
+  return raw;
+}
+
 function getValidationKey(rowId: string, field: string): string {
   return `${rowId}:${field}`;
 }
@@ -1137,11 +1164,11 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               const severe = mostSevere(vResults);
               if (severe && severe.severity === 'error') {
                 onValidationError?.(cellAddr, severe);
-                model.setCellValue(cellAddr, v);
+                model.setCellValue(cellAddr as { rowId: string; field: Extract<keyof TData, string> }, v as TData[Extract<keyof TData, string>]);
                 model.cancelEdit();
                 return;
               }
-              model.setCellValue(cellAddr, v);
+              model.setCellValue(cellAddr as { rowId: string; field: Extract<keyof TData, string> }, v as TData[Extract<keyof TData, string>]);
               model.cancelEdit();
               onCellEdit?.(rowId, col.field, v, value);
               // Excel-365 commit-and-advance: Enter → DOWN, Tab → RIGHT.
@@ -1171,10 +1198,19 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               // Clear the cancellation flag each time a new edit input
               // mounts, so a previous Esc doesn't silence the next commit.
               if (el) inlineEditCancelledRef.current = false;
+              // Select the existing text on mount so a `dblclick` → type
+              // sequence REPLACES the value instead of appending. Without
+              // this, `autoFocus` lands the cursor at the end of the text
+              // and a numeric cell containing "138739" + typing "77777"
+              // becomes "13873977777" — i.e. catastrophic drift on edit.
+              // The deferred-to-next-frame call ensures the select runs
+              // after the browser's native focus/dblclick selection logic,
+              // which would otherwise override a sync call.
+              if (el) requestAnimationFrame(() => el.select());
             }}
             onBlur={e => {
               if (inlineEditCancelledRef.current) return;
-              const newVal = e.target.value;
+              const newVal = coerceCellValueForColumn(col, e.target.value);
               const vResults = validateCell(col, newVal, rowId, row);
               const severe = mostSevere(vResults);
               if (severe && severe.severity === 'error') {
@@ -1182,7 +1218,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
                 model.cancelEdit();
                 return;
               }
-              model.setCellValue(cellAddr, newVal);
+              model.setCellValue(cellAddr as { rowId: string; field: Extract<keyof TData, string> }, newVal as TData[Extract<keyof TData, string>]);
               model.cancelEdit();
               onCellEdit?.(rowId, col.field, newVal, value);
             }}
@@ -1204,12 +1240,12 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               // without being swallowed here.
               if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
-                const newVal = (e.target as HTMLInputElement).value;
+                const newVal = coerceCellValueForColumn(col, (e.target as HTMLInputElement).value);
                 const vResults = validateCell(col, newVal, rowId, row);
                 const severe = mostSevere(vResults);
                 if (severe && severe.severity === 'error') {
                   onValidationError?.(cellAddr, severe);
-                  model.setCellValue(cellAddr, newVal);
+                  model.setCellValue(cellAddr as { rowId: string; field: Extract<keyof TData, string> }, newVal as TData[Extract<keyof TData, string>]);
                   model.cancelEdit();
                   e.stopPropagation();
                   return;
@@ -1218,7 +1254,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
                 // accepted but validation state persists so the tooltip
                 // stays visible. `validateCell` already wrote the latest
                 // results; avoid clobbering them with `clearValidation`.
-                model.setCellValue(cellAddr, newVal);
+                model.setCellValue(cellAddr as { rowId: string; field: Extract<keyof TData, string> }, newVal as TData[Extract<keyof TData, string>]);
                 model.cancelEdit();
                 onCellEdit?.(rowId, col.field, newVal, value);
                 // Compute the commit-and-advance target. Enter steps DOWN

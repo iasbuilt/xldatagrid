@@ -122,6 +122,40 @@ export class EventBus {
    * @returns The fully-processed {@link GridEvent} (inspect `cancelled` to
    *          determine if a `before`-phase hook vetoed it).
    */
+  /**
+   * Synchronous fast-path used by core mutation methods to run the
+   * `before:*` cancellation gate without an `await` boundary that would
+   * defer React's view of the mutation to a microtask.
+   *
+   * All currently-shipped extensions register synchronous before-hooks
+   * (regex-validation, column-resize, excel-mode). If a user-provided
+   * hook returns a Promise, this method ignores its eventual resolution
+   * — it cannot block synchronously. Hooks needing async work should
+   * register on the `on:*` phase instead, which still runs through the
+   * async `dispatch` path below.
+   *
+   * @returns the {@link GridEvent} with `cancelled` already set per any
+   *   sync before-handler verdict.
+   */
+  dispatchBeforeSync(type: GridEventType, payload: Record<string, unknown> = {}): GridEvent {
+    let cancelled = false;
+    const event: GridEvent = {
+      type,
+      timestamp: performance.now(),
+      payload,
+      get cancelled() { return cancelled; },
+      cancel() { cancelled = true; },
+    };
+    for (const hook of this.hooks) {
+      if (hook.event !== type || hook.phase !== 'before') continue;
+      if (cancelled) break;
+      const result = hook.handler(event);
+      if (result === false) { cancelled = true; break; }
+      // Promise results from misregistered async before-hooks are ignored.
+    }
+    return event;
+  }
+
   async dispatch(type: GridEventType, payload: Record<string, unknown> = {}): Promise<GridEvent> {
     // Construct the event envelope with a reactive cancelled flag
     let cancelled = false;

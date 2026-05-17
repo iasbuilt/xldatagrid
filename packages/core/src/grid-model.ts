@@ -1,23 +1,66 @@
 /**
  * Central orchestration module for the datagrid's data and interaction lifecycle.
  *
- * This module exposes the {@link GridModel} interface and its factory function
- * {@link createGridModel}. Together they form the imperative "model" layer that
- * owns all mutable grid state -- data rows, column layout, sorting, filtering,
- * selection, inline editing, undo/redo history, grouping, and pagination -- and
- * coordinates mutations through an event-driven plugin architecture.
+ * Owns canonical grid state via a `@causl/core` graph. Every mutation flows
+ * through `graph.commit(intent, tx => …)`, yielding atomic transitions:
+ * subscribers see exactly one new value per user-level action, never an
+ * intermediate state. Derived selectors (`processedData`, `rowIds`,
+ * `visibleColumns`) are `graph.derived` nodes — lazily recomputed only when
+ * their inputs change.
  *
- * The model is framework-agnostic: React (or any other view layer) can drive
- * re-renders via the `subscribe` / `getState` contract compatible with
- * `useSyncExternalStore`.
+ * BYO-graph: callers can pass `config.graph` to register grid state on a
+ * shared graph alongside other SPA modules. External derivations
+ * (`graph.derived('app:totals', get => aggregate(get(model.nodes.data)))`)
+ * then update in the same commit that produced the grid mutation —
+ * the foundational reason for the migration from Jotai.
  *
  * @module grid-model
  */
 import {
+  createCausl,
+  type Graph,
+  type InputNode,
+  type DerivedNode,
+} from '@causl/core';
+import type { StorageAdapter } from '@causl/persistence';
+
+/**
+ * Serialize ColumnState for storage: `hidden` is a `Set<string>` and would
+ * become `{}` under raw `JSON.stringify`. We tag-encode it as
+ * `{ __set: true, items: [...] }` and decode symmetrically.
+ */
+function encodeColumnState<TData>(state: ColumnState<TData>): string {
+  return JSON.stringify(state, (_k, v) => {
+    if (v instanceof Set) return { __set: true, items: Array.from(v) };
+    return v;
+  });
+}
+function decodeColumnState<TData>(raw: string, fallback: ColumnState<TData>): ColumnState<TData> {
+  try {
+    const parsed = JSON.parse(raw, (_k, v) => {
+      if (v && typeof v === 'object' && (v as { __set?: boolean }).__set) {
+        return new Set((v as { items: string[] }).items);
+      }
+      return v;
+    }) as ColumnState<TData>;
+    // Defence: a stored envelope from an older schema may be missing
+    // expected fields. Fall back to config-derived defaults per field.
+    return {
+      columns: parsed.columns ?? fallback.columns,
+      order: parsed.order ?? fallback.order,
+      widths: parsed.widths ?? fallback.widths,
+      hidden: parsed.hidden instanceof Set ? parsed.hidden : new Set<string>(),
+      frozen: parsed.frozen ?? fallback.frozen,
+    };
+  } catch {
+    return fallback;
+  }
+}
+import {
   GridConfig, GridState, CellAddress, CellValue, SortState,
   FilterState, Command, GridListener, RowKeyResolver, ColumnDef,
-  GridEvent, GridEventType, GridCommands, ExtensionContext, ExtensionDefinition,
-  GroupState, SelectionMode,
+  GridEvent, GridEventType, GridCommands, ExtensionDefinition,
+  GroupState,
 } from './types';
 import { EventBus } from './events';
 import { PluginHost } from './plugin';
@@ -38,14 +81,60 @@ import {
 import {
   createUndoRedoState, UndoRedoState, pushCommand, undo as undoOp, redo as redoOp,
 } from './undo-redo';
-import { groupRows, createGroupState } from './grouping';
+import { createGroupState } from './grouping';
+
+/**
+ * Bundle of causl nodes that hold and derive grid state. Exposed on
+ * {@link GridModel.nodes} so SPA consumers can read directly, register
+ * external derivations, or subscribe with fine granularity.
+ */
+export interface GridNodes<TData = Record<string, unknown>> {
+  readonly data: InputNode<TData[]>;
+  readonly columns: InputNode<ColumnState<TData>>;
+  readonly sort: InputNode<SortState>;
+  readonly filter: InputNode<FilterState | null>;
+  readonly selection: InputNode<SelectionState>;
+  readonly editing: InputNode<EditingState>;
+  readonly undoRedo: InputNode<UndoRedoState>;
+  readonly groupState: InputNode<GroupState>;
+  readonly expandedRows: InputNode<Set<string>>;
+  readonly expandedSubGrids: InputNode<Set<string>>;
+  readonly page: InputNode<number>;
+  readonly pageSize: InputNode<number>;
+  readonly config: InputNode<GridConfig<TData>>;
+  readonly processedData: DerivedNode<TData[]>;
+  readonly rowIds: DerivedNode<string[]>;
+  readonly visibleColumns: DerivedNode<ColumnDef<TData>[]>;
+}
 
 export interface GridModel<TData = Record<string, unknown>> {
+  /**
+   * Underlying causl graph (consumer-supplied via `config.graph` or
+   * grid-owned via an internal `createCausl()` call). Always populated.
+   *
+   * Used by SPA-side consumers that want to layer their own
+   * `graph.derived(...)` nodes over grid state, or to subscribe to
+   * single fields via `graph.subscribe(model.nodes.X, cb)` for
+   * fine-grained re-render control. See `playground/spa-integration/`
+   * for a worked example.
+   */
+  readonly graph: Graph;
+  /** Causl nodes holding grid state — see {@link GridNodes}. */
+  readonly nodes: GridNodes<TData>;
   getState(): GridModelState<TData>;
   getProcessedData(): TData[];
   getRowIds(): string[];
   getVisibleColumns(): ColumnDef<TData>[];
-  setCellValue(cell: CellAddress, value: unknown): Promise<void>;
+  /**
+   * Set a cell value. Generic-typed so the `value` is checked against
+   * the declared `TData[field]` at compile time. Closes
+   * iasbuilt/xldatagrid#104 — pairs with `@causl/core`'s
+   * `InvariantViolationError` (≥ 0.2.1) as the runtime guard.
+   */
+  setCellValue<F extends Extract<keyof TData, string>>(
+    cell: { rowId: string; field: F },
+    value: TData[F],
+  ): Promise<void>;
   beginEdit(cell: CellAddress): void;
   commitEdit(): Promise<void>;
   cancelEdit(): void;
@@ -100,59 +189,204 @@ export function createGridModel<TData extends Record<string, unknown>>(
     ? config.rowKey
     : (row: TData) => String(row[config.rowKey as keyof TData]);
 
-  let state: GridModelState<TData> = {
-    data: [...config.data],
-    columns: createColumnState(config.columns),
-    sort: [],
-    filter: null,
-    selection: createSelection(config.selectionMode ?? 'cell'),
-    editing: createEditingState(),
-    undoRedo: createUndoRedoState(),
-    groupState: createGroupState(),
-    expandedRows: new Set(),
-    expandedSubGrids: new Set(),
-    page: 0,
-    pageSize: config.pageSize ?? 50,
-    config,
+  // BYO-graph: caller may supply a graph for SPA-wide composition; otherwise
+  // we own a private graph for backward compatibility.
+  const graph: Graph =
+    (config.graph as Graph | undefined) ?? createCausl();
+  const ns = config.graphNamespace ?? 'grid';
+  const nodeId = (key: string) => `${ns}:${key}`;
+
+  // Register input nodes — one per top-level state slice. Reads/writes go
+  // through these via `graph.read(node)` / `tx.set(node, value)`.
+  // Causl invariant (≥ v0.2.1): validate every staged grid-data write
+  // so a string slipping into a numeric column produces a typed
+  // `InvariantViolationError` at the commit boundary instead of
+  // silently propagating into downstream aggregations (which was the
+  // string-concatenation "gigantic salary" bug — iasbuilt/xldatagrid#103).
+  // Validator is built once per createGridModel call from the column
+  // declarations; columns added later via `config.columns` reactive
+  // sync are reflected the next time the editor commits because the
+  // invariant captures the live `config.columns` reference.
+  const numericFields = new Set(
+    config.columns
+      .filter((c) => c.cellType === 'numeric' || c.cellType === 'currency')
+      .map((c) => String(c.field)),
+  );
+  const booleanFields = new Set(
+    config.columns.filter((c) => c.cellType === 'boolean').map((c) => String(c.field)),
+  );
+  const dataInvariant = (rows: TData[]): void => {
+    if (numericFields.size === 0 && booleanFields.size === 0) return;
+    for (let i = 0, n = rows.length; i < n; i++) {
+      const row = rows[i] as Record<string, unknown>;
+      if (row == null) continue;
+      for (const f of numericFields) {
+        const v = row[f];
+        if (v == null) continue;
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+          throw new TypeError(
+            `row[${i}].${f}: expected finite number for cellType=numeric/currency, got ${typeof v} (${JSON.stringify(v)})`,
+          );
+        }
+      }
+      for (const f of booleanFields) {
+        const v = row[f];
+        if (v == null) continue;
+        if (typeof v !== 'boolean') {
+          throw new TypeError(
+            `row[${i}].${f}: expected boolean for cellType=boolean, got ${typeof v} (${JSON.stringify(v)})`,
+          );
+        }
+      }
+    }
   };
+  const dataNode = graph.input<TData[]>(nodeId('data'), [...config.data], {
+    invariant: dataInvariant,
+  });
+
+  // Column state is the primary UI-preference surface (widths, order,
+  // visibility, frozen). When the caller supplies a StorageAdapter, hydrate
+  // initial value from storage and mirror future changes back. We can't use
+  // `@causl/persistence`'s `persistedInput` here because `ColumnState.hidden`
+  // is a `Set` and `persistedInput` uses raw `JSON.stringify` — a Set is
+  // lost as `{}`. The thin wrapper below does the Set-aware encode/decode.
+  const storage = config.storage as StorageAdapter | undefined;
+  const persistenceKey = config.persistenceKey ?? `xldatagrid:${ns}`;
+  const columnsStorageKey = `${persistenceKey}:columns`;
+  const initialColumns = createColumnState(config.columns);
+  const hydratedColumns = (() => {
+    if (!storage) return initialColumns;
+    const raw = storage.get(columnsStorageKey);
+    if (raw === null) return initialColumns;
+    return decodeColumnState(raw, initialColumns);
+  })();
+  const columnsNode = graph.input(nodeId('columns'), hydratedColumns);
+  const sortNode = graph.input<SortState>(nodeId('sort'), []);
+  const filterNode = graph.input<FilterState | null>(nodeId('filter'), null);
+  const selectionNode = graph.input<SelectionState>(
+    nodeId('selection'),
+    createSelection(config.selectionMode ?? 'cell'),
+  );
+  const editingNode = graph.input<EditingState>(nodeId('editing'), createEditingState());
+  const undoRedoNode = graph.input<UndoRedoState>(nodeId('undoRedo'), createUndoRedoState());
+  const groupStateNode = graph.input<GroupState>(nodeId('groupState'), createGroupState());
+  const expandedRowsNode = graph.input<Set<string>>(nodeId('expandedRows'), new Set());
+  const expandedSubGridsNode = graph.input<Set<string>>(nodeId('expandedSubGrids'), new Set());
+  const pageNode = graph.input<number>(nodeId('page'), 0);
+  const pageSizeNode = graph.input<number>(nodeId('pageSize'), config.pageSize ?? 50);
+  const configNode = graph.input<GridConfig<TData>>(nodeId('config'), config);
+
+  // Derived selectors — lazy, automatic dependency tracking, recomputed only
+  // when an input they read actually changes.
+  const processedDataNode = graph.derived<TData[]>(nodeId('processedData'), (get) => {
+    let result = get(dataNode);
+    result = applyFiltering(result as Record<string, unknown>[] as TData[], get(filterNode));
+    result = applySorting(result as Record<string, unknown>[] as TData[], get(sortNode));
+    return result;
+  });
+  const rowIdsNode = graph.derived<string[]>(nodeId('rowIds'), (get) =>
+    get(dataNode).map((row) => resolveRowKey(row)),
+  );
+  const visibleColumnsNode = graph.derived<ColumnDef<TData>[]>(nodeId('visibleColumns'), (get) =>
+    getVisibleColumns(get(columnsNode)) as ColumnDef<TData>[],
+  );
+
+  const nodes: GridNodes<TData> = {
+    data: dataNode,
+    columns: columnsNode,
+    sort: sortNode,
+    filter: filterNode,
+    selection: selectionNode,
+    editing: editingNode,
+    undoRedo: undoRedoNode,
+    groupState: groupStateNode,
+    expandedRows: expandedRowsNode,
+    expandedSubGrids: expandedSubGridsNode,
+    page: pageNode,
+    pageSize: pageSizeNode,
+    config: configNode,
+    processedData: processedDataNode,
+    rowIds: rowIdsNode,
+    visibleColumns: visibleColumnsNode,
+  };
+
+  function getState(): GridModelState<TData> {
+    return {
+      data: graph.read(dataNode),
+      columns: graph.read(columnsNode),
+      sort: graph.read(sortNode),
+      filter: graph.read(filterNode),
+      selection: graph.read(selectionNode),
+      editing: graph.read(editingNode),
+      undoRedo: graph.read(undoRedoNode),
+      groupState: graph.read(groupStateNode),
+      expandedRows: graph.read(expandedRowsNode),
+      expandedSubGrids: graph.read(expandedSubGridsNode),
+      page: graph.read(pageNode),
+      pageSize: graph.read(pageSizeNode),
+      config: graph.read(configNode),
+    };
+  }
+
+  function getRowIds(): string[] {
+    return graph.read(rowIdsNode);
+  }
 
   const listeners = new Set<GridListener>();
   const eventBus = new EventBus();
 
-  function notify() {
+  // Listener fan-out: one subscribeCommits, filtered to commits that touched
+  // a node in this grid's namespace. External grid mutations (other grids on
+  // the same graph, external derivation recomputes) do not fan to our
+  // listeners. Also fires the umbrella `grid:dataChange` / `grid:stateChange`
+  // EventBus events that pre-Phase-3 consumers (e.g. extensions) depend on.
+  const nsPrefix = `${ns}:`;
+  const dataNodeId = String(nodeId('data'));
+  const secondaryStateNodeIds = new Set([
+    String(nodeId('editing')),
+    String(nodeId('groupState')),
+    String(nodeId('expandedRows')),
+    String(nodeId('expandedSubGrids')),
+    String(nodeId('page')),
+    String(nodeId('pageSize')),
+  ]);
+  const cleanupListenerBridge = graph.subscribeCommits((commit) => {
+    const ids = commit.changedNodes.map((id) => String(id));
+    const touchedThisGrid = ids.some((id) => id.startsWith(nsPrefix));
+    if (!touchedThisGrid) return;
     for (const l of listeners) l();
-  }
-
-  function getRowIds(): string[] {
-    return state.data.map(row => resolveRowKey(row));
-  }
-
-  let cachedProcessedData: TData[] | null = null;
-  let lastDataRef: TData[] | null = null;
-  let lastSortRef: SortState | null = null;
-  let lastFilterRef: FilterState | null = null;
-
-  function getProcessedData(): TData[] {
-    if (
-      cachedProcessedData &&
-      state.data === lastDataRef &&
-      state.sort === lastSortRef &&
-      state.filter === lastFilterRef
-    ) {
-      return cachedProcessedData;
+    if (ids.includes(dataNodeId)) {
+      eventBus.dispatch('grid:dataChange', { data: graph.read(dataNode) });
     }
-    let result = state.data;
-    result = applyFiltering(result as Record<string, unknown>[] as TData[], state.filter);
-    result = applySorting(result as Record<string, unknown>[] as TData[], state.sort);
-    cachedProcessedData = result;
-    lastDataRef = state.data;
-    lastSortRef = state.sort;
-    lastFilterRef = state.filter;
-    return result;
-  }
+    if (ids.some((id) => secondaryStateNodeIds.has(id))) {
+      eventBus.dispatch('grid:stateChange', {});
+    }
+  });
+
+  // Persistence write-back: when storage is supplied, mirror columnsNode
+  // changes through the Set-aware encoder. Symmetric to the hydration read
+  // above.
+  const cleanupPersistence = storage
+    ? graph.subscribe(columnsNode, (value) => {
+        try {
+          storage.set(columnsStorageKey, encodeColumnState(value));
+        } catch {
+          /* swallow — storage failures should not break the grid. */
+        }
+      })
+    : (() => {
+        /* no storage → nothing to clean up */
+      });
 
   const commands: GridCommands = {
-    setCellValue: async (cell, value) => model.setCellValue(cell, value),
+    // GridCommands.setCellValue is the framework-side erased shape
+    // (`CellAddress` + `unknown`). The tightened generic surface on
+    // `GridModel.setCellValue<F>` is preserved; this is the bridge.
+    setCellValue: async (cell, value) =>
+      model.setCellValue(
+        cell as { rowId: string; field: Extract<keyof TData, string> },
+        value as TData[Extract<keyof TData, string>],
+      ),
     beginEdit: async (cell) => model.beginEdit(cell),
     commitEdit: async () => model.commitEdit(),
     cancelEdit: async () => model.cancelEdit(),
@@ -163,8 +397,8 @@ export function createGridModel<TData extends Record<string, unknown>>(
       else model.clearSelectionState();
     },
     scrollToCell: () => {},
-    invalidateCells: () => notify(),
-    invalidateAll: () => notify(),
+    invalidateCells: () => { for (const l of listeners) l(); },
+    invalidateAll: () => { for (const l of listeners) l(); },
     sort: (s) => model.sort(s),
     filter: (f) => model.filter(f),
     setColumnWidth: (field, width) => model.setColumnWidth(field, width),
@@ -177,128 +411,157 @@ export function createGridModel<TData extends Record<string, unknown>>(
 
   const pluginHost = new PluginHost(
     eventBus,
-    () => ({
-      data: state.data,
-      columns: getVisibleColumns(state.columns) as ColumnDef[],
-      sort: state.sort,
-      filter: state.filter,
-      selection: state.selection.range,
-      editingCell: state.editing.cell,
-      page: state.page,
-      pageSize: state.pageSize,
-      expandedRows: state.expandedRows,
-      expandedSubGrids: state.expandedSubGrids,
-      columnOrder: state.columns.order,
-      columnWidths: state.columns.widths,
-      hiddenColumns: state.columns.hidden,
-      frozenColumns: state.columns.frozen,
-      groupState: state.groupState,
-      undoStack: state.undoRedo.undoStack,
-      redoStack: state.undoRedo.redoStack,
-    }),
+    () => {
+      const s = getState();
+      return {
+        data: s.data as Record<string, unknown>[],
+        columns: getVisibleColumns(s.columns) as ColumnDef[],
+        sort: s.sort,
+        filter: s.filter,
+        selection: s.selection.range,
+        editingCell: s.editing.cell,
+        page: s.page,
+        pageSize: s.pageSize,
+        expandedRows: s.expandedRows,
+        expandedSubGrids: s.expandedSubGrids,
+        columnOrder: s.columns.order,
+        columnWidths: s.columns.widths,
+        hiddenColumns: s.columns.hidden,
+        frozenColumns: s.columns.frozen,
+        groupState: s.groupState,
+        undoStack: s.undoRedo.undoStack,
+        redoStack: s.undoRedo.redoStack,
+      };
+    },
     () => commands,
   );
 
   const model: GridModel<TData> = {
-    getState: () => state,
-    getProcessedData,
+    graph,
+    nodes,
+    getState,
+    getProcessedData: () => graph.read(processedDataNode),
     getRowIds,
-    getVisibleColumns: () => getVisibleColumns(state.columns),
+    getVisibleColumns: () => graph.read(visibleColumnsNode),
 
     async setCellValue(cell: CellAddress, value: unknown) {
       const rowIds = getRowIds();
       const rowIndex = rowIds.indexOf(cell.rowId);
       if (rowIndex === -1) return;
 
-      const row = state.data[rowIndex];
+      const data = graph.read(dataNode);
+      const row = data[rowIndex];
       if (!row) return;
       const oldValue = row[cell.field as keyof TData];
 
-      const beforeEvent = await eventBus.dispatch('before:cell:valueChange', { cell, oldValue, newValue: value });
+      const beforeEvent = eventBus.dispatchBeforeSync('before:cell:valueChange', { cell, oldValue, newValue: value });
       if (beforeEvent.cancelled) return;
 
-      const before = structuredClone(state.data);
-      const after = structuredClone(state.data);
+      const before = structuredClone(data);
+      const after = structuredClone(data);
       after[rowIndex] = { ...after[rowIndex]!, [cell.field]: value } as TData;
 
+      // Undo/redo closures re-enter the graph via separate commits — accepted
+      // tradeoff: a user-level undo is two commits (data restore + bookkeeping).
       const cmd: Command = {
         type: 'cell:edit',
         timestamp: Date.now(),
         description: `Edit ${cell.field}`,
-        undo: () => { state = { ...state, data: structuredClone(before) }; },
-        redo: () => { state = { ...state, data: structuredClone(after) }; },
+        undo: () => graph.commit('cell:edit:undo', (tx) => tx.set(dataNode, structuredClone(before))),
+        redo: () => graph.commit('cell:edit:redo', (tx) => tx.set(dataNode, structuredClone(after))),
       };
 
-      state = { ...state, data: after, undoRedo: pushCommand(state.undoRedo, cmd) };
+      const undoStateBefore = graph.read(undoRedoNode);
+      graph.commit('cell:setValue', (tx) => {
+        tx.set(dataNode, after);
+        tx.set(undoRedoNode, pushCommand(undoStateBefore, cmd));
+      });
 
       await eventBus.dispatch('cell:valueChange', { cell, oldValue, newValue: value });
-      notify();
     },
 
     beginEdit(cell: CellAddress) {
       const rowIds = getRowIds();
       const rowIndex = rowIds.indexOf(cell.rowId);
       if (rowIndex === -1) return;
-      const row = state.data[rowIndex];
+      const row = graph.read(dataNode)[rowIndex];
       if (!row) return;
       const value = row[cell.field as keyof TData] as CellValue;
-      state = { ...state, editing: beginEditState(state.editing, cell, value) };
-      notify();
+      const editingBefore = graph.read(editingNode);
+      graph.commit('cell:beginEdit', (tx) =>
+        tx.set(editingNode, beginEditState(editingBefore, cell, value)),
+      );
     },
 
     async commitEdit() {
-      const result = commitEditState(state.editing);
+      const editingBefore = graph.read(editingNode);
+      const result = commitEditState(editingBefore);
       if (result) {
-        await model.setCellValue(result.cell, result.value);
+        // commitEditState surfaces { cell: CellAddress, value }; we widen
+        // to the tightened generic shape that setCellValue requires.
+        await model.setCellValue(
+          result.cell as { rowId: string; field: Extract<keyof TData, string> },
+          result.value as TData[Extract<keyof TData, string>],
+        );
       }
-      state = { ...state, editing: cancelEditState(state.editing) };
-      notify();
+      const editingAfterValueWrite = graph.read(editingNode);
+      graph.commit('cell:commitEdit', (tx) =>
+        tx.set(editingNode, cancelEditState(editingAfterValueWrite)),
+      );
     },
 
     cancelEdit() {
-      state = { ...state, editing: cancelEditState(state.editing) };
-      notify();
+      const editingBefore = graph.read(editingNode);
+      graph.commit('cell:cancelEdit', (tx) =>
+        tx.set(editingNode, cancelEditState(editingBefore)),
+      );
     },
 
     async insertRow(index: number, data?: Record<string, unknown>) {
       const newRow = (data ?? {}) as TData;
 
-      const beforeEvent = await eventBus.dispatch('before:row:insert', { index, data: newRow });
+      const beforeEvent = eventBus.dispatchBeforeSync('before:row:insert', { index, data: newRow });
       if (beforeEvent.cancelled) return;
 
-      const before = structuredClone(state.data);
-      const after = structuredClone(state.data);
+      const currentData = graph.read(dataNode);
+      const before = structuredClone(currentData);
+      const after = structuredClone(currentData);
       after.splice(index, 0, newRow);
 
       const cmd: Command = {
         type: 'row:insert',
         timestamp: Date.now(),
         description: 'Insert row',
-        undo: () => { state = { ...state, data: structuredClone(before) }; },
-        redo: () => { state = { ...state, data: structuredClone(after) }; },
+        undo: () => graph.commit('row:insert:undo', (tx) => tx.set(dataNode, structuredClone(before))),
+        redo: () => graph.commit('row:insert:redo', (tx) => tx.set(dataNode, structuredClone(after))),
       };
 
-      state = { ...state, data: after, undoRedo: pushCommand(state.undoRedo, cmd) };
+      const undoStateBefore = graph.read(undoRedoNode);
+      graph.commit('row:insert', (tx) => {
+        tx.set(dataNode, after);
+        tx.set(undoRedoNode, pushCommand(undoStateBefore, cmd));
+      });
+
       await eventBus.dispatch('row:insert', { index, data: newRow });
-      notify();
     },
 
     async deleteRows(rowIds: string[]) {
       const allRowIds = getRowIds();
       const entries = rowIds
-        .map(rowId => ({ rowId, index: allRowIds.indexOf(rowId) }))
-        .filter(e => e.index !== -1)
+        .map((rowId) => ({ rowId, index: allRowIds.indexOf(rowId) }))
+        .filter((e) => e.index !== -1)
         .sort((a, b) => b.index - a.index);
 
       if (entries.length === 0) return;
 
-      const beforeEvent = await eventBus.dispatch('before:row:delete', { rowIds });
+      const beforeEvent = eventBus.dispatchBeforeSync('before:row:delete', { rowIds });
       if (beforeEvent.cancelled) return;
 
-      const before = structuredClone(state.data);
-      const after = structuredClone(state.data);
+      const currentData = graph.read(dataNode);
+      const before = structuredClone(currentData);
+      const after = structuredClone(currentData);
       for (const { index } of entries) {
-        const originalRow = state.data[index] as TData;
+        const originalRow = currentData[index] as TData;
         const clonedIndex = after.findIndex(
           (r) => JSON.stringify(r) === JSON.stringify(originalRow)
         );
@@ -309,20 +572,25 @@ export function createGridModel<TData extends Record<string, unknown>>(
         type: 'batch',
         timestamp: Date.now(),
         description: `Delete ${entries.length} row(s)`,
-        undo: () => { state = { ...state, data: structuredClone(before) }; },
-        redo: () => { state = { ...state, data: structuredClone(after) }; },
+        undo: () => graph.commit('row:delete:undo', (tx) => tx.set(dataNode, structuredClone(before))),
+        redo: () => graph.commit('row:delete:redo', (tx) => tx.set(dataNode, structuredClone(after))),
       };
 
-      state = { ...state, data: after, undoRedo: pushCommand(state.undoRedo, batchCmd) };
+      const undoStateBefore = graph.read(undoRedoNode);
+      graph.commit('row:delete', (tx) => {
+        tx.set(dataNode, after);
+        tx.set(undoRedoNode, pushCommand(undoStateBefore, batchCmd));
+      });
+
       await eventBus.dispatch('row:delete', { rowIds });
-      notify();
     },
 
     async moveRow(fromIndex: number, toIndex: number) {
-      const beforeEvent = await eventBus.dispatch('before:row:move', { fromIndex, toIndex });
+      const beforeEvent = eventBus.dispatchBeforeSync('before:row:move', { fromIndex, toIndex });
       if (beforeEvent.cancelled) return;
 
-      const before = structuredClone(state.data);
+      const currentData = graph.read(dataNode);
+      const before = structuredClone(currentData);
       const after = structuredClone(before);
       const [row] = after.splice(fromIndex, 1);
       if (row) after.splice(toIndex, 0, row);
@@ -331,131 +599,155 @@ export function createGridModel<TData extends Record<string, unknown>>(
         type: 'row:move',
         timestamp: Date.now(),
         description: `Move row from ${fromIndex} to ${toIndex}`,
-        undo: () => { state = { ...state, data: structuredClone(before) }; },
-        redo: () => { state = { ...state, data: structuredClone(after) }; },
+        undo: () => graph.commit('row:move:undo', (tx) => tx.set(dataNode, structuredClone(before))),
+        redo: () => graph.commit('row:move:redo', (tx) => tx.set(dataNode, structuredClone(after))),
       };
 
-      state = { ...state, data: after, undoRedo: pushCommand(state.undoRedo, cmd) };
+      const undoStateBefore = graph.read(undoRedoNode);
+      graph.commit('row:move', (tx) => {
+        tx.set(dataNode, after);
+        tx.set(undoRedoNode, pushCommand(undoStateBefore, cmd));
+      });
+
       await eventBus.dispatch('row:move', { fromIndex, toIndex });
-      notify();
     },
 
     toggleRowSelect(rowId: string) {
-      const columns = getVisibleColumns(state.columns);
-      state = { ...state, selection: toggleRowSelection(state.selection, rowId, columns) };
-      notify();
+      const cols = getVisibleColumns(graph.read(columnsNode));
+      const sel = graph.read(selectionNode);
+      graph.commit('selection:toggleRow', (tx) =>
+        tx.set(selectionNode, toggleRowSelection(sel, rowId, cols)),
+      );
     },
 
     sort(sortState: SortState) {
-      state = { ...state, sort: sortState };
+      graph.commit('column:sort', (tx) => tx.set(sortNode, sortState));
       eventBus.dispatch('column:sort', { sort: sortState });
-      notify();
     },
 
     toggleColumnSort(field: string, multi: boolean) {
-      const newSort = toggleSort(state.sort, field, multi);
+      const newSort = toggleSort(graph.read(sortNode), field, multi);
       model.sort(newSort);
     },
 
     filter(filterState: FilterState | null) {
-      state = { ...state, filter: filterState };
+      graph.commit('column:filter', (tx) => tx.set(filterNode, filterState));
       eventBus.dispatch('column:filter', { filter: filterState });
-      notify();
     },
 
     select(cell: CellAddress) {
-      state = { ...state, selection: selectCell(state.selection, cell) };
-      eventBus.dispatch('cell:selectionChange', { selection: state.selection.range });
-      notify();
+      const sel = graph.read(selectionNode);
+      graph.commit('cell:select', (tx) =>
+        tx.set(selectionNode, selectCell(sel, cell)),
+      );
+      eventBus.dispatch('cell:selectionChange', { selection: graph.read(selectionNode).range });
     },
 
     selectRowByKey(rowId: string) {
-      const cols = getVisibleColumns(state.columns);
-      state = { ...state, selection: selectRow(state.selection, rowId, cols) };
-      notify();
+      const cols = getVisibleColumns(graph.read(columnsNode));
+      const sel = graph.read(selectionNode);
+      graph.commit('row:select', (tx) =>
+        tx.set(selectionNode, selectRow(sel, rowId, cols)),
+      );
     },
 
     selectColumnByField(field: string) {
-      const rowIds = getRowIds();
-      state = { ...state, selection: selectColumn(state.selection, field, rowIds) };
-      notify();
+      const ids = getRowIds();
+      const sel = graph.read(selectionNode);
+      graph.commit('column:select', (tx) =>
+        tx.set(selectionNode, selectColumn(sel, field, ids)),
+      );
     },
 
     extendTo(cell: CellAddress) {
-      state = { ...state, selection: extendSelection(state.selection, cell) };
-      notify();
+      const sel = graph.read(selectionNode);
+      graph.commit('selection:extend', (tx) =>
+        tx.set(selectionNode, extendSelection(sel, cell)),
+      );
     },
 
     extendRowSelection(rowId: string) {
-      const cols = getVisibleColumns(state.columns);
-      state = { ...state, selection: extendRowSelection(state.selection, rowId, cols) };
-      notify();
+      const cols = getVisibleColumns(graph.read(columnsNode));
+      const sel = graph.read(selectionNode);
+      graph.commit('selection:extendRow', (tx) =>
+        tx.set(selectionNode, extendRowSelection(sel, rowId, cols)),
+      );
     },
 
     selectAllCells() {
-      const cols = getVisibleColumns(state.columns) as ColumnDef<TData>[];
-      const rowIds = getRowIds();
-      state = { ...state, selection: selectAll(state.selection, cols as ColumnDef[], rowIds) };
-      notify();
+      const cols = getVisibleColumns(graph.read(columnsNode)) as ColumnDef<TData>[];
+      const ids = getRowIds();
+      const sel = graph.read(selectionNode);
+      graph.commit('selection:all', (tx) =>
+        tx.set(selectionNode, selectAll(sel, cols as ColumnDef[], ids)),
+      );
     },
 
     clearSelectionState() {
-      state = { ...state, selection: clearSelection(state.selection) };
-      notify();
+      const sel = graph.read(selectionNode);
+      graph.commit('selection:clear', (tx) =>
+        tx.set(selectionNode, clearSelection(sel)),
+      );
     },
 
     setColumnWidth(field: string, width: number) {
-      state = { ...state, columns: resizeColumn(state.columns, field, width) };
+      const colsBefore = graph.read(columnsNode);
+      graph.commit('column:resize', (tx) =>
+        tx.set(columnsNode, resizeColumn(colsBefore, field, width)),
+      );
       eventBus.dispatch('column:resize', { field, width });
-      notify();
     },
 
     reorderColumnByField(field: string, toIndex: number) {
-      state = { ...state, columns: reorderColumn(state.columns, field, toIndex) };
+      const colsBefore = graph.read(columnsNode);
+      graph.commit('column:reorder', (tx) =>
+        tx.set(columnsNode, reorderColumn(colsBefore, field, toIndex)),
+      );
       eventBus.dispatch('column:reorder', { field, toIndex });
-      notify();
     },
 
     toggleColumnVisible(field: string) {
-      state = { ...state, columns: toggleColumnVisibility(state.columns, field) };
+      const colsBefore = graph.read(columnsNode);
+      graph.commit('column:visibility', (tx) =>
+        tx.set(columnsNode, toggleColumnVisibility(colsBefore, field)),
+      );
       eventBus.dispatch('column:visibility', { field });
-      notify();
     },
 
     freezeColumnByField(field: string, position: 'left' | 'right' | null) {
-      state = { ...state, columns: freezeColumn(state.columns, field, position) };
-      notify();
+      const colsBefore = graph.read(columnsNode);
+      graph.commit('column:freeze', (tx) =>
+        tx.set(columnsNode, freezeColumn(colsBefore, field, position)),
+      );
     },
 
     toggleSubGridExpansion(rowId: string) {
-      const next = new Set(state.expandedSubGrids);
-      const singleExpand = state.config.subGrid?.singleExpand ?? false;
+      const currentSet = graph.read(expandedSubGridsNode);
+      const next = new Set(currentSet);
+      const singleExpand = graph.read(configNode).subGrid?.singleExpand ?? false;
+      let collapsed = false;
 
       if (next.has(rowId)) {
         next.delete(rowId);
-        state = { ...state, expandedSubGrids: next };
-        eventBus.dispatch('subGrid:collapse', { rowId });
+        collapsed = true;
       } else {
-        if (singleExpand) {
-          next.clear();
-        }
+        if (singleExpand) next.clear();
         next.add(rowId);
-        state = { ...state, expandedSubGrids: next };
-        eventBus.dispatch('subGrid:expand', { rowId });
       }
-      notify();
+      graph.commit('subGrid:toggle', (tx) => tx.set(expandedSubGridsNode, next));
+      eventBus.dispatch(collapsed ? 'subGrid:collapse' : 'subGrid:expand', { rowId });
     },
 
     undo() {
-      const newUndoRedo = undoOp(state.undoRedo);
-      state = { ...state, undoRedo: newUndoRedo };
-      notify();
+      // undoOp calls cmd.undo() internally, which issues its own commit;
+      // we then commit the bookkeeping. Two commits per user-level undo.
+      const newUndoRedo = undoOp(graph.read(undoRedoNode));
+      graph.commit('undo:bookkeeping', (tx) => tx.set(undoRedoNode, newUndoRedo));
     },
 
     redo() {
-      const newUndoRedo = redoOp(state.undoRedo);
-      state = { ...state, undoRedo: newUndoRedo };
-      notify();
+      const newUndoRedo = redoOp(graph.read(undoRedoNode));
+      graph.commit('redo:bookkeeping', (tx) => tx.set(undoRedoNode, newUndoRedo));
     },
 
     async registerExtension(ext: ExtensionDefinition) {
@@ -477,6 +769,8 @@ export function createGridModel<TData extends Record<string, unknown>>(
 
     async destroy() {
       await pluginHost.dispose();
+      cleanupListenerBridge();
+      cleanupPersistence();
       eventBus.clear();
       listeners.clear();
     },

@@ -25,10 +25,12 @@
     "docs:open": "typedoc && open docs/index.html",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
+    "lint:migration": "causl-migration-check packages/core",
     "chromatic": "chromatic --exit-zero-on-changes",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@causl/migration-check": "^0.1.0",
     "@chromatic-com/storybook": "^5.1.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

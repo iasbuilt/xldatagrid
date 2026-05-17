@@ -226,4 +226,21 @@ describe('NumericCell', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onCommit).toHaveBeenCalledWith(10);
   });
+
+  it('selects existing text when entering edit mode so typing replaces (not appends)', async () => {
+    // Regression for the "gigantic salary" bug reported in the
+    // playground/spa-integration demo: dblclick → type was appending
+    // digits to the existing value (e.g. 138739 + "77777" → 13873977777)
+    // because the browser's native dblclick selection logic overrode the
+    // sync `.select()` in NumericCell's mount effect. The fix defers
+    // select() to requestAnimationFrame.
+    const { container } = render(
+      <NumericCell value={138739} row={{}} column={baseColumn} rowIndex={0} isEditing={true} onCommit={noop} onCancel={noop} />
+    );
+    const input = container.querySelector('input')! as HTMLInputElement;
+    // Yield one frame so the deferred select() runs.
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(String(138739).length);
+  });
 });

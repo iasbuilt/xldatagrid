@@ -1101,6 +1101,39 @@ export interface GridConfig<TData = Record<string, unknown>> {
   shiftArrowBehavior?: 'scroll' | 'rangeSelect';
   /** Visual theme — a preset name or a custom token map. */
   theme?: 'light' | 'dark' | Record<string, string>;
+  /**
+   * Optional causl `Graph` instance the grid should register its state on.
+   * When supplied, other SPA modules can compose derived nodes over grid
+   * state with atomic, glitch-free updates inside the same commit boundary.
+   * When omitted, the grid constructs a private graph.
+   *
+   * Typed as `unknown` here to avoid a hard type-level dependency on
+   * `@causl/core` in `GridConfig` consumers that don't use this field.
+   * `createGridModel` narrows internally.
+   */
+  graph?: unknown;
+  /**
+   * Namespace prefix used for grid-owned node ids on the graph. Defaults
+   * to `'grid'`. Use distinct namespaces when multiple grids share one
+   * graph to avoid id collisions.
+   */
+  graphNamespace?: string;
+  /**
+   * Optional `StorageAdapter` from `@causl/persistence` used to persist
+   * user-preference state (column widths, order, visibility, frozen).
+   * When omitted, preferences live in-memory only.
+   *
+   * Typed as `unknown` here to keep `@causl/persistence` an optional
+   * dependency at the type level for consumers that don't persist prefs.
+   * `createGridModel` narrows internally.
+   */
+  storage?: unknown;
+  /**
+   * Storage key prefix for persisted UI prefs. Defaults to
+   * `'xldatagrid:<graphNamespace>'`. Distinguish multiple grids on the
+   * same `StorageAdapter` instance.
+   */
+  persistenceKey?: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -242,10 +242,14 @@ export function useKeyboard<TData extends Record<string, unknown>>(
           }
           input.dispatchEvent(new Event('input', { bubbles: true }));
           // Place the caret after the seeded char so continued typing
-          // appends naturally.
+          // appends naturally. The DataGridBody's input ref also schedules
+          // a select() in a separate rAF to fix the dblclick-then-type
+          // "append-not-replace" bug; that select() would clobber our
+          // cursor placement if it ran later. Nest in a second rAF so our
+          // setSelectionRange wins the race for the type-to-edit path.
           if (typeof input.setSelectionRange === 'function') {
             const len = typedChar.length;
-            input.setSelectionRange(len, len);
+            requestAnimationFrame(() => input.setSelectionRange(len, len));
           }
         });
         return;
@@ -496,7 +500,10 @@ export function useKeyboard<TData extends Record<string, unknown>>(
             const rowIndex = allRowIds.indexOf(current.rowId);
             if (rowIndex >= 0) {
               const currentVal = model.getProcessedData()[rowIndex]?.[current.field as keyof TData];
-              model.setCellValue(current, !currentVal);
+              model.setCellValue(
+                current as { rowId: string; field: Extract<keyof TData, string> },
+                !currentVal as TData[Extract<keyof TData, string>],
+              );
             }
           }
         }
@@ -505,7 +512,10 @@ export function useKeyboard<TData extends Record<string, unknown>>(
       // --- Delete: clear the selected cell's value ---
       case 'Delete': {
         if (current && !editing.cell) {
-          model.setCellValue(current, null);
+          model.setCellValue(
+            current as { rowId: string; field: Extract<keyof TData, string> },
+            null as TData[Extract<keyof TData, string>],
+          );
         }
         break;
       }
@@ -565,7 +575,10 @@ export function useKeyboard<TData extends Record<string, unknown>>(
           const { rows, cols } = resolveRangeIndices(selection, columns, rowIds);
           for (const rowId of rows) {
             for (const field of cols) {
-              model.setCellValue({ rowId, field }, null);
+              model.setCellValue(
+                { rowId, field: field as Extract<keyof TData, string> },
+                null as TData[Extract<keyof TData, string>],
+              );
             }
           }
         }
@@ -587,8 +600,8 @@ export function useKeyboard<TData extends Record<string, unknown>>(
                 const targetCol = columns[colIndex + c];
                 if (!targetCol) break;
                 model.setCellValue(
-                  { rowId: targetRowId, field: targetCol.field },
-                  row[c]
+                  { rowId: targetRowId, field: targetCol.field as Extract<keyof TData, string> },
+                  row[c] as TData[Extract<keyof TData, string>],
                 );
               }
             }

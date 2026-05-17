@@ -74,7 +74,10 @@ export { htmlToMarkdown } from './cells/RichTextCell';
 
 // Default cell renderer registry. Consumers can use this as a starting point
 // when supplying a custom `cellRenderers` prop to {@link DataGrid}.
+// `StatusCell` (issue #93) carries the new onAddOption / canDeleteOption /
+// onDeleteOption contract for the editable-dropdown picker.
 export { cellRendererMap, TagsCell } from './cells';
+export { StatusCell } from './cells/StatusCell';
 
 // Sub-components
 export { DataGridHeader } from './header';

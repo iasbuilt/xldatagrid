@@ -132,3 +132,14 @@ Temporary Items
 **/logs/
 **/tmp/
 **/temp/
+
+# Claude-generated session docs at repo root — plans, reviews, phase
+# writeups, publishing playbooks. The permanent root .md allowlist
+# below is the canonical set; everything else lives in /tmp/ (also
+# gitignored above) and never gets committed.
+/*.md
+!/README.md
+!/CHANGELOG.md
+!/PLAN.md
+!/LICENSE.md
+!/CONTRIBUTING.md

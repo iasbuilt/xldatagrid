@@ -84,7 +84,15 @@ export function useDraftState({
     const focusInput = () => {
       inputRef.current?.focus();
       if (selectOnFocus) {
-        inputRef.current?.select();
+        // Defer select() past the browser's native dblclick selection
+        // logic, which would otherwise override a sync call and leave the
+        // cursor at the end of the text. Without this defer, dblclick →
+        // type APPENDS digits instead of replacing — catastrophic for
+        // numeric / currency cells (e.g. "138739" + typing "77777" =
+        // "13873977777"). Mirrors the fix in
+        // packages/react/src/body/DataGridBody.tsx for the default
+        // inline editor.
+        requestAnimationFrame(() => inputRef.current?.select());
       }
     };
 

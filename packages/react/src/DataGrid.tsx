@@ -66,7 +66,7 @@ import {
   mostSevere,
 } from '@iasbuilt/datagrid-core';
 import { ValidationTooltip } from './ValidationTooltip';
-import { useGridWithAtoms } from './use-grid';
+import { useGrid } from './use-grid';
 import { useGridStore } from './use-grid-store';
 import { useKeyboard } from './use-keyboard';
 import { useVirtualization } from './use-virtualization';
@@ -322,7 +322,7 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   const rowHeight = rowHeightProp ?? (density === 'comfortable' ? 48 : 36);
 
   const themeStyle = resolveThemeStyle(config.theme);
-  const { model, store, atoms } = useGridWithAtoms(config);
+  const model = useGrid(config);
   const state = useGridStore(model);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1285,7 +1285,7 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   // ---------------------------------------------------------------------------
 
   return (
-    <GridContext.Provider value={{ model, store, atoms } as any}>
+    <GridContext.Provider value={{ model } as any}>
       <div
         ref={containerRef}
         id={domId}

@@ -13,6 +13,9 @@ import { defineConfig, devices } from '@playwright/test';
 const STORYBOOK_PORT = Number(process.env.STORYBOOK_PORT ?? 6006);
 const STORYBOOK_URL = `http://localhost:${STORYBOOK_PORT}`;
 
+const PLAYGROUND_PORT = Number(process.env.PLAYGROUND_PORT ?? 5173);
+const PLAYGROUND_URL = `http://localhost:${PLAYGROUND_PORT}`;
+
 export default defineConfig({
   testDir: './e2e',
   // Parallelism policy:
@@ -55,15 +58,29 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    // `storybook dev` is fast enough for E2E and supports HMR; the static
-    // build path is available via `pnpm build-storybook && pnpm exec http-server`
-    // for anyone who needs to profile without Vite in the loop.
-    command: `pnpm exec storybook dev --ci --port ${STORYBOOK_PORT} --quiet`,
-    url: STORYBOOK_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      // Storybook — primary baseURL; almost every e2e spec hits this.
+      command: `pnpm exec storybook dev --ci --port ${STORYBOOK_PORT} --quiet`,
+      url: STORYBOOK_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      // Vite playground — hosts the BYO-graph SPA-integration demo at
+      // /spa-integration/. Specs that need it pass `{ baseURL: 'http://localhost:5173' }`
+      // in their test.use(...) block.
+      command: `pnpm exec vite playground --port ${PLAYGROUND_PORT}`,
+      url: PLAYGROUND_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env: {
+        CAUSLJS_NPM_TOKEN: process.env.CAUSLJS_NPM_TOKEN ?? '',
+      },
+    },
+  ],
 });

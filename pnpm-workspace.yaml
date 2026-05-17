@@ -1,3 +1,7 @@
 packages:
   - "packages/*"
   - "playground"
+# @causl/* packages are consumed from the public npm registry (npmjs.com).
+# No registry config, no auth token needed. The earlier GitHub Packages
+# routing has been removed; if you see an `.npmrc` referencing
+# `@causljs:registry=https://npm.pkg.github.com`, delete it — it's stale.

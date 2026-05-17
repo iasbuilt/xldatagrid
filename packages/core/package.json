@@ -18,6 +18,9 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
+    "@causl/core": "^0.3.0",
+    "@causl/persistence": "^0.1.0",
+    "@causl/devtools": "^0.1.0",
     "idb": "^8.0.2"
   },
   "devDependencies": {

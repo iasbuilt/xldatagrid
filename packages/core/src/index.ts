@@ -71,3 +71,11 @@ export * from './search-index';
 // Cell text overflow policy vocabulary + default policy resolver and middle-truncation helper.
 export type { OverflowPolicy, Density } from './overflow';
 export { truncateMiddle, truncateEnd, getDefaultOverflowPolicy } from './overflow';
+
+// Re-exports of the causl primitives core depends on, so SPA integrators
+// who want BYO-graph composition (`createGridModel({ graph })` +
+// `graph.derived(...)` over `model.nodes.*`) need only one dependency:
+// `@iasbuilt/datagrid-core`. The full @causl/core surface is still
+// available via direct dep for power users.
+export { createCausl, InvariantViolationError } from '@causl/core';
+export type { Graph, Node, InputNode, DerivedNode, Commit } from '@causl/core';

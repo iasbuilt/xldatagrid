@@ -16,13 +16,17 @@ export { GhostRow } from './GhostRow';
 export { MasterDetail } from './MasterDetail';
 export type { MasterDetailProps, DetailComponentProps } from './MasterDetail';
 export { useGrid, useGridWithAtoms } from './use-grid';
+export { useCauslDevtools } from './use-causl-devtools';
+export type { UseCauslDevtoolsOptions } from './use-causl-devtools';
 export type { UseGridResult } from './use-grid';
 export { useGridStore } from './use-grid-store';
 export { GridContext, useGridContext, useGridAtomContext } from './context';
 export type { GridContextValue } from './context';
-export { createAtomicGridModel } from './atomic-grid-model';
-export type { AtomicGridBundle, AtomicStore } from './atomic-grid-model';
-export type { GridAtomSystem, BaseAtoms, DerivedAtoms, ActionAtoms } from './atoms';
+// Phase 3: Jotai shadow layer removed. createAtomicGridModel,
+// AtomicGridBundle, AtomicStore, and the GridAtomSystem/BaseAtoms/
+// DerivedAtoms/ActionAtoms type bundle are gone. Use createGridModel
+// from @iasbuilt/datagrid-core directly; for fine-grained per-node
+// subscriptions, reach into model.graph / model.nodes (causl).
 export { TransposedGrid } from './TransposedGrid';
 export type { TransposedGridProps } from './TransposedGrid';
 export { useDragDrop } from './use-drag-drop';

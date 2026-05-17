@@ -30,7 +30,8 @@ A high-performance, fully-featured datagrid component library for React 19. Buil
 - [Features](#features)
   - [Core Engine](#core-engine)
   - [React Components](#react-components)
-  - [State Management (Jotai Atoms)](#state-management-jotai-atoms)
+  - [State Management (causl)](#state-management-causl)
+  - [Redux DevTools (development)](#redux-devtools-development)
   - [15 Cell Types](#15-cell-types)
   - [Extensions](#extensions)
   - [MUI Theme Bridge](#mui-theme-bridge)
@@ -341,7 +342,7 @@ xldatagrid/
 ### Tech Stack
 
 - **Runtime**: React 19, TypeScript 5.7
-- **State**: Jotai (atomic state for grid model)
+- **State**: [causl](https://www.npmjs.com/package/@causl/core) (transactional state with atomic commits, glitch-free derivations, time-travel)
 - **Build**: tsup (per-package ESM + CJS bundles), Vite (playground + Storybook)
 - **Test**: Vitest 3 + Testing Library + jsdom
 - **Storybook**: Storybook 10 with React-Vite
@@ -389,20 +390,139 @@ xldatagrid/
 - **Slots** — Composable slot components: `<Toolbar>`, `<FormulaBar>`, `<StatusBar>`, `<EmptyState>`
 - **Drag & Drop** — Row reordering via drag handles on row-number cells
 
-### State Management (Jotai Atoms)
+### State Management (causl)
 
-The React package uses a three-tier Jotai atom architecture for granular state:
+All grid state — data, columns, sort, filter, selection, editing, undo/redo,
+grouping, pagination, and UI interaction (menus, drag, resize) — lives in a
+[**causl**](https://www.npmjs.com/package/@causl/core) graph. Each mutation
+flows through `graph.commit(intent, tx => …)`, yielding atomic transitions:
+subscribers see exactly one new value per user-level action, never an
+intermediate state. Derived selectors (`processedData`, `rowIds`,
+`visibleColumns`) are `graph.derived` nodes that lazily recompute only when
+their inputs change.
 
-- **Base Atoms** — Writable ground truth: data, columns, sort, filter, selection, editing, undo/redo, grouping, pagination, config
-- **Derived Atoms** — Read-only projections: processed (sorted/filtered) data, visible columns, row IDs
-- **Action Atoms** — Write-only mutations: `setCellValue`, `beginEdit`, `commitEdit`, `insertRow`, `deleteRows`, `toggleColumnSort`, etc.
+**BYO-graph (Bring Your Own Graph)** — pass `config.graph` to
+`useGrid` / `createGridModel` to register grid state on a graph your SPA
+already owns. External derivations (a pivot panel, a chart, URL state)
+can then read from grid nodes through the same graph and update atomically
+inside the commit that produced the mutation. See
+[`playground/spa-integration/`](./playground/spa-integration/) for a worked
+example.
 
 Hooks for consumption:
-- `useGrid(config)` — Returns imperative `GridModel`
-- `useGridWithAtoms(config)` — Returns `GridModel`, Jotai `store`, and `atoms` for granular subscriptions
-- `useGridStore(model)` — Subscribes to full grid state snapshots
-- `useGridSelector(model, selector)` — Subscribes to derived state slices
-- `useGridContext()` / `useGridAtomContext()` — Access grid from React context
+- `useGrid(config)` — Returns the imperative `GridModel`; `model.graph` and
+  `model.nodes.*` give direct access to the causl substrate.
+- `useGridStore(model, selector?)` — `useSyncExternalStore` wrapper. Returns
+  the full `GridModelState` snapshot (no selector) or a derived slice.
+- `useGridInteraction({ graph?, namespace? })` — Causl-backed interaction
+  state (menus, drag, resize, column overrides). Honors the BYO-graph
+  contract: pass your shared graph and the hook registers under
+  `<namespace>:state` (default `'interaction'`).
+- `useGridContext()` — Grab the enclosing grid's `GridModel` from React
+  context.
+- `useCauslDevtools(model)` — see [Redux DevTools](#redux-devtools-development)
+  below.
+
+Per-mutation typed errors (`InvariantViolationError`) surface from the engine
+when a write would put state in an invalid shape (e.g. a string into a
+numeric column). Catch at the dispatch boundary or rely on the typed
+`setCellValue<F>(cell, value: TData[F])` signature to prevent the bug at
+compile time.
+
+### Redux DevTools (development)
+
+The grid's causl graph speaks the Redux DevTools Extension protocol via
+[`@causl/devtools-bridge`](https://www.npmjs.com/package/@causl/devtools-bridge).
+Every grid mutation (`cell:setValue`, `column:sort`, `interaction:open-column-menu`,
+…) appears as a Redux-style action in the DevTools timeline, with the
+post-commit graph snapshot inspectable in the State panel. The extension's
+**Jump-to-Action / Jump-to-State** time-travel replays against the engine's
+retained snapshot history (default 50 commits, configurable on the graph).
+
+**Zero-cost in production**: the bridge import is dynamic, the connection
+short-circuits when the extension isn't installed, and the hook bails on
+`process.env.NODE_ENV === 'production'`. Production bundles tree-shake the
+entire dep out — verified by the bridge's `connectDevtools.zero-cost.test.ts`.
+
+#### One-time setup per developer machine
+
+1. **Install the Redux DevTools extension** in your browser:
+   - Chrome / Edge: <https://chromewebstore.google.com/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd>
+   - Firefox: <https://addons.mozilla.org/en-US/firefox/addon/reduxdevtools/>
+   - Or any Chromium-based browser that supports MV3 extensions.
+2. **Add the bridge as a dev dependency** in your app:
+   ```sh
+   pnpm add -D @causl/devtools-bridge
+   ```
+   (The bridge is declared as an `optional` peer dep on `@iasbuilt/datagrid-react`,
+   so it's tree-shaken from production bundles when absent.)
+3. **Open the Redux tab** in the browser DevTools. The extension auto-detects
+   the connection on the first commit; you'll see your grid instance(s) in
+   the dropdown labeled by the `name` you pass below.
+
+#### Use in your app
+
+Call `useCauslDevtools(model)` inside your grid container:
+
+```tsx
+import { useGrid, useCauslDevtools } from '@iasbuilt/datagrid-react';
+
+function EmployeesGrid({ data, columns }) {
+  const model = useGrid({ data, columns, rowKey: 'id' });
+  useCauslDevtools(model, { name: 'employees' });
+  return <DataGrid model={model} />;
+}
+```
+
+That's it. Every commit on `model.graph` (cell edits, sorts, filters, menu
+opens via `useGridInteraction`, etc.) shows up in DevTools.
+
+#### Sharing one DevTools panel across multiple grids
+
+If multiple grids share a single causl graph (BYO-graph), call the hook
+**once** at the app level rather than per-grid — the bridge keeps one
+connection per graph and refcounts internally:
+
+```tsx
+import { createCausl, useCauslDevtools, useGrid } from '@iasbuilt/datagrid-react';
+
+function App() {
+  const graph = useMemo(() => createCausl({ name: 'app' }), []);
+  useCauslDevtools({ graph } as any, { name: 'app' });  // wraps the shared graph
+  return (
+    <>
+      <EmployeesGrid graph={graph} />
+      <ProjectsGrid graph={graph} />
+    </>
+  );
+}
+```
+
+(The `as any` is a pragmatic cast — the hook accepts a full `GridModel`
+today; a follow-up will add a `useCauslDevtoolsForGraph(graph, options)`
+overload that accepts a bare graph.)
+
+#### What you'll see in DevTools
+
+| Field | Source |
+|---|---|
+| **Action type** | The commit `intent` string — e.g. `cell:setValue`, `column:sort`, `interaction:open-column-menu`. |
+| **Action payload** | `{ changedNodes: [...] }` listing which causl node ids changed in the commit. |
+| **State** | The full graph snapshot: every input node's current value, keyed by id. |
+| **Diff** | DevTools' built-in diff view between the prior and current snapshots. |
+| **Timeline** | Every commit since the page loaded (up to the engine's `snapshotRetentionCap`). |
+
+#### Time-travel (Jump-to-Action)
+
+Clicking the **Jump** icon next to an action in the timeline restores the
+graph to that snapshot. Subsequent grid renders reflect the historical
+state. To return to the live present, click Jump on the most recent action.
+
+The reverse-path messages supported are documented in
+[`@causl/devtools-bridge`'s connect.ts](https://github.com/causljs/causl-ts/blob/main/packages/devtools-bridge/src/connect.ts):
+`JUMP_TO_STATE`, `JUMP_TO_ACTION`, `PAUSE_RECORDING`, `LOCK_CHANGES`,
+`IMPORT_STATE`, `COMMIT`, `ROLLBACK`, `SWEEP`, `TOGGLE_ACTION`,
+`TOGGLE_PERSIST`.
 
 ### 15 Cell Types
 

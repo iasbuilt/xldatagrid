@@ -113,6 +113,21 @@ export function toDatagridThemeTokens(
   const primary = get('global.brand.primary.default');
   const selectionBg = get('global.selection.bg.default');
 
+  // Validation severity tokens consumed by the portal validation tooltip
+  // (`packages/react/src/ValidationTooltip.tsx`). Issue #78 requires a
+  // severity-keyed background + matching icon foreground for the tooltip;
+  // these tokens slot into the existing feedback.{danger,warning,info}
+  // surface scale so a single token-pack swap retints the tooltip without
+  // a code change. `bg.strong` is the saturated severity hue (red / yellow
+  // / blue), and the icon glyph is drawn in white so it stays legible
+  // against that surface in both light and dark themes.
+  const validationErrorBg = get('feedback.danger.bg.strong');
+  const validationErrorIcon = '#ffffff';
+  const validationWarningBg = get('feedback.warning.bg.strong');
+  const validationWarningIcon = '#ffffff';
+  const validationInfoBg = get('feedback.info.bg.strong');
+  const validationInfoIcon = '#ffffff';
+
   return {
     // Primary / semantic
     '--dg-primary-color': primary,
@@ -120,6 +135,16 @@ export function toDatagridThemeTokens(
     '--dg-text-color': cellTextDefault,
     '--dg-border-color': gridBorder,
     '--dg-error-color': cellBorderInvalid,
+
+    // Validation tooltip severity tokens (see issue #78). Surfaces use the
+    // saturated severity hue; icon foreground is white so the inline SVG
+    // glyph reads clearly against the surface in both themes.
+    '--dg-validation-error-bg': validationErrorBg,
+    '--dg-validation-error-icon': validationErrorIcon,
+    '--dg-validation-warning-bg': validationWarningBg,
+    '--dg-validation-warning-icon': validationWarningIcon,
+    '--dg-validation-info-bg': validationInfoBg,
+    '--dg-validation-info-icon': validationInfoIcon,
 
     // Header
     '--dg-header-bg': headerBg,

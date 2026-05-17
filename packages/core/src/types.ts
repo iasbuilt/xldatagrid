@@ -177,6 +177,103 @@ export interface CellRange {
 export type SelectionMode = 'cell' | 'row' | 'range' | 'none';
 
 // ---------------------------------------------------------------------------
+// Upload / attachment system (issue #91)
+// ---------------------------------------------------------------------------
+
+/**
+ * Opaque handle returned by an upload backend after persisting a file.
+ *
+ * The grid is deliberately agnostic about *how* a file is stored, deduped,
+ * scoped, or revoked — those concerns live in the consumer's attachment
+ * service (e.g. the iasbuilt/webapp attachment system specced in
+ * istracked/webapp#155). The grid only needs a stable reference so it can
+ * record what was uploaded and, optionally, render a download/preview link.
+ *
+ * @remarks
+ * The `id` is the canonical persisted handle (a content-hash, blob-store key,
+ * or DB row id — the grid does not care). `url` and `meta` are optional
+ * hints used by the cell renderer's display mode; cells gracefully fall back
+ * to id-only display when they are omitted.
+ */
+export interface AttachmentRef {
+  /** Stable backend identifier for the persisted file. */
+  id: string;
+  /** Optional human-friendly file name (used by display mode). */
+  name?: string;
+  /** Optional URL for download / preview affordance. */
+  url?: string;
+  /** Optional MIME type — used to pick an icon / thumbnail. */
+  mimeType?: string;
+  /** Byte size of the persisted file, if known. */
+  size?: number;
+  /** Free-form metadata bag forwarded verbatim by the backend. */
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Per-cell context passed to {@link UploadAttachHandler} so the consumer can
+ * route the upload to the right scope / row / column on its side.
+ *
+ * @remarks
+ * `CellAddress` is intentionally reused here so the same address shape that
+ * flows through selection and editing also identifies an upload target. The
+ * `column` reference is forwarded so the handler can read column-level
+ * config (accept list, scope, etc.) without re-resolving the column.
+ *
+ * @typeParam TData - The shape of a data row.
+ */
+export interface UploadAttachContext<TData = Record<string, unknown>> {
+  /** Target cell receiving the attachment. */
+  cell: CellAddress;
+  /** Column definition for the target cell. */
+  column: ColumnDef<TData>;
+  /** Row data for the target cell. */
+  row: TData;
+}
+
+/**
+ * Reports progress for an in-flight upload.
+ *
+ * @param loaded - Bytes transferred so far.
+ * @param total - Total bytes expected (may be `undefined` for chunked uploads).
+ */
+export type UploadProgressReporter = (loaded: number, total?: number) => void;
+
+/**
+ * The clean interface the grid hands to consumers (e.g. iasbuilt/webapp) so
+ * they can wire the file-upload cell to their attachment system.
+ *
+ * **Contract**
+ * - Receives the raw `File` and an {@link UploadAttachContext} identifying
+ *   the target cell.
+ * - Must resolve with an {@link AttachmentRef} on success.
+ * - Must reject (throw) on failure; the cell surfaces the error message and
+ *   keeps the cell value unchanged so the user can retry.
+ * - May call `onProgress` zero or more times before resolving.
+ *
+ * @typeParam TData - The shape of a data row.
+ *
+ * @example
+ * ```ts
+ * const columns: ColumnDef<MyRow>[] = [
+ *   {
+ *     id: 'attachment', field: 'attachment', title: 'File',
+ *     cellType: 'upload',
+ *     onAttach: async (file, ctx) => {
+ *       const ref = await myAttachmentService.upload(file, { scope: ctx.column.scope });
+ *       return { id: ref.id, name: file.name, url: ref.url };
+ *     },
+ *   },
+ * ];
+ * ```
+ */
+export type UploadAttachHandler<TData = Record<string, unknown>> = (
+  file: File,
+  context: UploadAttachContext<TData>,
+  onProgress?: UploadProgressReporter,
+) => Promise<AttachmentRef>;
+
+// ---------------------------------------------------------------------------
 // Column definition
 // ---------------------------------------------------------------------------
 
@@ -314,6 +411,53 @@ export interface ColumnDef<TData = Record<string, unknown>> {
   subGridColumns?: ColumnDef[];
   /** The row-key field used to identify rows inside the sub-grid. */
   subGridRowKey?: string;
+
+  // Upload (issue #91) — the grid is the agnostic surface; consumers wire
+  // `onAttach` to their attachment backend (e.g. iasbuilt/webapp #155) and
+  // the cell value becomes a reference to the persisted attachment.
+
+  /**
+   * Backend-wiring callback invoked when the user picks or drops a file in
+   * an `upload` cell. Receives the raw {@link File}, an
+   * {@link UploadAttachContext} identifying the target cell, and an optional
+   * progress reporter. Must resolve to an {@link AttachmentRef}; rejecting
+   * surfaces an error in the cell and leaves the prior value intact so the
+   * user can retry.
+   *
+   * The grid is deliberately agnostic about *where* attachments live — that
+   * concern is owned by the consumer's attachment service (storage, dedupe,
+   * scoped inheritance, ACL all happen on the consumer side).
+   */
+  onAttach?: UploadAttachHandler<TData>;
+  /**
+   * For `upload` columns: when `true`, the cell stores a list of
+   * {@link AttachmentRef}s rather than a single ref. Defaults to `false`.
+   */
+  multiple?: boolean;
+  /**
+   * For `upload` columns: an optional list of accepted MIME types and/or
+   * extensions (`['image/png', '.pdf']`). Forwarded to the file picker via
+   * the `accept` attribute and used to reject mis-typed drops early.
+   */
+  accept?: string[];
+  /**
+   * For `upload` columns: optional per-file byte size cap. Drops/picks
+   * exceeding this size are rejected before {@link onAttach} is called.
+   */
+  maxSize?: number;
+  /**
+   * For `upload` columns: free-form scope hint forwarded to the consumer's
+   * attachment service. The grid never inspects this value — it is passed
+   * through to {@link onAttach} via {@link UploadAttachContext.column}, where
+   * the handler can read it to honour scoped inheritance / ACL rules.
+   */
+  scope?: string;
+  /**
+   * For `upload` columns: optional download/preview handler invoked when the
+   * user clicks the file link in display mode. Receives the persisted
+   * {@link AttachmentRef} (or the raw string value for unwired columns).
+   */
+  onDownload?: (ref: AttachmentRef | string) => void;
 }
 
 // ---------------------------------------------------------------------------

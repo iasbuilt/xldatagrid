@@ -63,6 +63,13 @@ export {
 } from './cells/BooleanSelectedCell';
 export { PasswordConfirmCell, MISMATCH_MESSAGE } from './cells/PasswordConfirmCell';
 
+// Issue #91 — file-upload cell + the default cell renderer map so consumers
+// can pass it to `DataGrid`'s `cellRenderers` prop without having to assemble
+// it themselves. Importing the map from the cells barrel keeps the public
+// surface stable as new built-in renderers are added.
+export { UploadCell } from './cells/UploadCell';
+export { cellRendererMap } from './cells';
+
 // Migration helper for consumers upgrading from the HTML-backed RichTextCell.
 export { htmlToMarkdown } from './cells/RichTextCell';
 

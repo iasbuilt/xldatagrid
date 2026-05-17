@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 export const dropZone = (isDragging: boolean): CSSProperties => ({
+  position: 'relative',
   display: 'flex',
   alignItems: 'center',
   gap: 6,
@@ -36,6 +37,49 @@ export const uploadButton: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+export const retryButton: CSSProperties = {
+  border: '1px solid #fecaca',
+  borderRadius: 4,
+  background: '#fef2f2',
+  color: '#b91c1c',
+  cursor: 'pointer',
+  padding: '2px 8px',
+  fontSize: 11,
+  whiteSpace: 'nowrap',
+};
+
 export const hiddenInput: CSSProperties = {
   display: 'none',
 };
+
+export const statusUploading: CSSProperties = {
+  fontSize: 11,
+  color: '#2563eb',
+  marginLeft: 4,
+};
+
+export const statusError: CSSProperties = {
+  fontSize: 11,
+  color: '#b91c1c',
+  marginLeft: 4,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: 160,
+};
+
+export const statusSuccess: CSSProperties = {
+  fontSize: 11,
+  color: '#15803d',
+  marginLeft: 4,
+};
+
+export const progressBar = (pct: number): CSSProperties => ({
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  height: 2,
+  width: `${Math.min(100, Math.max(0, pct))}%`,
+  background: '#2563eb',
+  transition: 'width 0.15s',
+});

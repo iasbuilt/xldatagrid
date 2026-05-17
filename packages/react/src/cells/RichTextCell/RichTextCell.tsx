@@ -388,6 +388,41 @@ export const RichTextCell = React.memo(function RichTextCell<TData = Record<stri
       onCancel();
       return;
     }
+    // Enter handling — Excel parity (issue #97):
+    //   • ALT+ENTER inserts a CommonMark hard line break (`  \n` — two
+    //     trailing spaces followed by `\n`) at the caret without
+    //     committing the edit. The two-space prefix is the standard
+    //     CommonMark hard-break encoding, which makes `react-markdown`
+    //     render the break as `<br>` in display mode without needing an
+    //     additional `remark-breaks` plugin. Excel users get the same
+    //     "wrap within the cell" affordance.
+    //   • SHIFT+ENTER preserves the native textarea behaviour (insert
+    //     `\n`) so the existing soft-paragraph shortcut keeps working.
+    //   • Plain ENTER commits the current draft, mirroring how every
+    //     other cell type ends an edit session via the keyboard.
+    if (e.key === 'Enter') {
+      if (e.altKey) {
+        e.preventDefault();
+        applyTransform((ta) => {
+          const { value, selectionStart, selectionEnd } = ta;
+          const insertion = '  \n';
+          const next =
+            value.slice(0, selectionStart) +
+            insertion +
+            value.slice(selectionEnd);
+          const caret = selectionStart + insertion.length;
+          return { value: next, selectionStart: caret, selectionEnd: caret };
+        });
+        return;
+      }
+      if (e.shiftKey) {
+        // Let the textarea insert a newline natively.
+        return;
+      }
+      e.preventDefault();
+      onCommit(draft);
+      return;
+    }
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
     const key = e.key.toLowerCase();

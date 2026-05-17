@@ -52,7 +52,7 @@ export function createColumnResize(config: ColumnResizeConfig = {}): ExtensionDe
     id: 'column-resize',
     name: 'Column Resize',
     version: '0.1.0',
-    hooks(ctx) {
+    hooks(_ctx) {
       return [{
         event: 'column:resize',
         phase: 'before',

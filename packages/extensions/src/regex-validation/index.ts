@@ -102,7 +102,7 @@ export function createRegexValidation(config: RegexValidationConfig): ExtensionD
     id: 'regex-validation',
     name: 'Regex Validation',
     version: '0.1.0',
-    hooks(ctx) {
+    hooks(_ctx) {
       return [{
         event: 'cell:valueChange',
         phase: 'before',

@@ -16,7 +16,6 @@ import {
   ExtensionDefinition,
   ColumnDef,
   FilterState,
-  CellValue,
 } from '@iasbuilt/datagrid-core';
 import { applyFiltering } from '@iasbuilt/datagrid-core';
 

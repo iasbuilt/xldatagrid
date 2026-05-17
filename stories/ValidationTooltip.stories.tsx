@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
 import { createValidationTooltip } from '@iasbuilt/datagrid-extensions';
-import type { ValidationTooltipConfig, ValidationTooltipEntry } from '@iasbuilt/datagrid-extensions';
+import type { ValidationTooltipEntry } from '@iasbuilt/datagrid-extensions';
 import type { ColumnDef, CellValue, CellAddress, ValidationResult, Validator } from '@iasbuilt/datagrid-core';
 import { makeEmployees, defaultColumns, Employee } from './data';
 import { storyContainer, gridContainer } from './helpers';
@@ -31,7 +31,7 @@ interface TooltipOverlayProps {
   onDismiss: (cell: CellAddress) => void;
 }
 
-function TooltipOverlay({ entries, showIcon, position, onDismiss }: TooltipOverlayProps) {
+function TooltipOverlay({ entries, showIcon, position: _position, onDismiss }: TooltipOverlayProps) {
   if (entries.length === 0) return null;
   return (
     <div
@@ -100,7 +100,12 @@ export const Default: StoryObj = {
     const [maxVisible, setMaxVisible] = useState(3);
     const [entries, setEntries] = useState<ValidationTooltipEntry[]>([]);
 
-    const extRef = useRef(
+    // Construct the extension once for its constructor-side validation. The
+    // returned ref is intentionally unread today — the story wires validators
+    // directly on the columns and renders the in-story overlay below — but
+    // keeping the call documents the public factory and asserts it builds
+    // without throwing on each render.
+    const _extRef = useRef(
       createValidationTooltip({ position, autoDismissMs, showIcon, maxVisible }),
     );
 

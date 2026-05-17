@@ -1,7 +1,5 @@
 import type { CSSProperties } from 'react';
 
-import { GhostRowPosition } from '@iasbuilt/datagrid-core';
-
 export const aboveHeaderPosition: CSSProperties = {
   display: 'flex',
   position: 'relative',

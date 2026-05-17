@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
-import { useGridContext } from '@iasbuilt/datagrid-react';
-import { createRegexValidation, createCellComments, createExportExtension } from '@iasbuilt/datagrid-extensions';
+import { createExportExtension } from '@iasbuilt/datagrid-extensions';
 import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
 import { makeEmployees, defaultColumns, Employee } from './data';
 import { storyContainer, gridContainer } from './helpers';
@@ -78,7 +77,12 @@ export const ExportFormats: StoryObj = {
     const data = makeEmployees(20);
 
     const handleExportCSV = () => {
-      const ext = createExportExtension({ filename: 'employees' });
+      // `createExportExtension` is invoked here for its side-effect-free
+      // construction (the story currently inlines the CSV generation rather
+      // than wiring the extension into the grid). Discarding the return value
+      // is intentional — it asserts the extension factory still constructs
+      // without throwing.
+      void createExportExtension({ filename: 'employees' });
       // Quick CSV generation using the extension's utility
       const header = defaultColumns.map((c) => c.title).join(',');
       const rows = data.map((r) => defaultColumns.map((c) => String((r as any)[c.field] ?? '')).join(','));

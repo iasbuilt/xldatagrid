@@ -12,7 +12,10 @@
  * @packageDocumentation
  */
 
-// eslint-disable-next-line import/no-relative-packages -- in-monorepo sibling package.
+// In-monorepo sibling package; the import looks relative because pnpm symlinks
+// the workspace, but it goes through the package's public `@iasbuilt/datagrid-react`
+// entry — no `eslint-plugin-import` rule needed once the lint scope landed
+// under #101.
 import { lightThemeTokens, darkThemeTokens } from '@iasbuilt/datagrid-react';
 
 /** Minimal MUI theme shape needed for the bridge. */

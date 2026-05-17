@@ -47,12 +47,10 @@ import {
 // It accepts both the minimal and the fully annotated form.
 type Row = { id: string; name: string };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _minimalValidator: Validator<Row> = {
   run: (value) => (value == null ? { message: 'required', severity: 'error' } : null),
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _namedValidator: Validator<Row> = {
   name: 'required',
   run: (value, ctx) => {

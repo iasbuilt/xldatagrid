@@ -8,7 +8,7 @@
  *
  * @module GhostRow
  */
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { ColumnDef, CellValue, GhostRowConfig, GhostRowPosition, ValidationResult, runValidators, mostSevere } from '@iasbuilt/datagrid-core';
 import { GridModel } from '@iasbuilt/datagrid-core';
 import * as styles from './GhostRow.styles';
@@ -60,7 +60,11 @@ export interface GhostRowProps<TData extends Record<string, unknown> = Record<st
  * ```
  */
 export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowProps<TData>) {
-  const { columns, columnWidths, rowHeight, topOffset, model, config, readOnly, onRowAdd, position: positionProp, sticky: stickyProp } = props;
+  // `readOnly` is part of the public props contract but the ghost row itself
+  // ignores it — the host grid is the source of truth for read-only gating
+  // (it never invokes `onRowAdd` on a read-only grid). Underscore-prefix tells
+  // the linter the destructure is intentional.
+  const { columns, columnWidths, rowHeight, topOffset, model, config, readOnly: _readOnly, onRowAdd, position: positionProp, sticky: stickyProp } = props;
 
   // Normalise the config: boolean `true` becomes an empty config object
   const ghostConfig: GhostRowConfig<TData> = typeof config === 'object' ? config : {};
@@ -108,7 +112,12 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
     return init;
   });
 
-  const [editingField, setEditingField] = useState<string | null>(null);
+  // The currently-edited field tracker exists for its *setter* — the field
+  // value itself was previously consumed by an `isEditing` check that no
+  // longer fires (the input element is always rendered). Underscored to
+  // silence `no-unused-vars` while keeping the explicit type annotation as
+  // documentation of what the setter accepts.
+  const [_editingField, setEditingField] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -350,7 +359,6 @@ export function GhostRow<TData extends Record<string, unknown>>(props: GhostRowP
     >
       {columns.map((col, colIdx) => {
         const width = columnWidths[colIdx]?.width ?? 150;
-        const isEditing = editingField === col.field;
         const value = values[col.field];
         const error = validationErrors[col.field];
         const colPlaceholder = col.placeholder ?? placeholder;

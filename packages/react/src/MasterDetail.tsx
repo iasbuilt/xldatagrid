@@ -9,10 +9,8 @@
  *
  * @module MasterDetail
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { DataGrid, DataGridProps } from './DataGrid';
-import { useGrid } from './use-grid';
-import { useGridStore } from './use-grid-store';
+import React, { useCallback, useEffect, useState } from 'react';
+import { DataGridProps } from './DataGrid';
 import * as styles from './MasterDetail.styles';
 
 // ---------------------------------------------------------------------------
@@ -108,8 +106,12 @@ export function MasterDetail<TData extends Record<string, unknown>>(
     rowKey,
     onSortChange,
     onFilterChange: _onFilterChange,
+    // `_rest` collects the remaining DataGrid props but the wrapper never
+    // forwards them today — the inner DataGrid is rendered by the host. Kept
+    // to document the prop contract even though it's unused at runtime.
     ...rest
   } = props;
+  void rest;
 
   // Normalise rowKey into a function form for consistent usage
   const resolveRowKey = typeof rowKey === 'function'

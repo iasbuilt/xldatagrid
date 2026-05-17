@@ -82,7 +82,7 @@ export function createExcelMode(
         event: 'cell:valueChange' as const,
         phase: 'on' as const,
         priority: 500,
-        handler: (event: GridEvent) => {
+        handler: (_event: GridEvent) => {
           if (!opts.autoSave || !ctx) return;
           // When a cell value changes via edit, auto-commit is already handled
           // by the grid. This hook is a placeholder for extensions that need
@@ -106,7 +106,7 @@ export function createExcelMode(
         event: 'cell:doubleClick' as const,
         phase: 'before' as const,
         priority: 100,
-        handler: (event: GridEvent) => {
+        handler: (_event: GridEvent) => {
           // In excel mode, single-click already starts editing, so double-click
           // is a no-op override to prevent default double-click behaviour.
           if (opts.editOnKeypress) {

@@ -28,7 +28,9 @@ export function DataGridToolbar<TData>(props: DataGridToolbarProps<TData>) {
     onToggleVisibilityMenu,
     onColumnVisibilityChange,
     rowGroupConfig,
-    computedRowGroups,
+    // Reserved for a future "N groups" indicator in the toolbar; declared in
+    // the props contract for callers that already compute it.
+    computedRowGroups: _computedRowGroups,
     onCollapseAll,
     onExpandAll,
   } = props;

@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
 import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode } from '@iasbuilt/datagrid-core';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Chip from '@mui/material/Chip';
@@ -14,14 +13,10 @@ import Divider from '@mui/material/Divider';
 import LightMode from '@mui/icons-material/LightMode';
 import DarkMode from '@mui/icons-material/DarkMode';
 import Palette from '@mui/icons-material/Palette';
-import FilterList from '@mui/icons-material/FilterList';
-import Sort from '@mui/icons-material/Sort';
 import Download from '@mui/icons-material/Download';
 import GridView from '@mui/icons-material/GridView';
 import ViewColumn from '@mui/icons-material/ViewColumn';
-import Undo from '@mui/icons-material/Undo';
-import Redo from '@mui/icons-material/Redo';
-import { makeEmployees, defaultColumns, departmentOptions, Employee } from '../data';
+import { makeEmployees, defaultColumns, Employee } from '../data';
 import { EventLog } from '../helpers';
 import * as Sections from './sections';
 
@@ -280,14 +275,6 @@ function MegaGridSection() {
     URL.revokeObjectURL(url);
     log('Exported JSON');
   }
-
-  // Theme icon map
-  const themeIcons: Record<string, React.ReactNode> = {
-    light: <LightMode fontSize="small" />,
-    dark: <DarkMode fontSize="small" />,
-    custom: <Palette fontSize="small" />,
-    excel365: <GridView fontSize="small" />,
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

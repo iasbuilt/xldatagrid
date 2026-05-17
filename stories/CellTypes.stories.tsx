@@ -28,7 +28,7 @@ interface CellShowcase {
   tags: string[];
   list: string;
   chipSelect: string[];
-  compoundChipList: { id: string; label: string }[];
+  compoundChipList: { id: string; label: string; color?: string }[];
   upload: string;
   subGrid: Record<string, unknown>[];
 }

@@ -297,6 +297,29 @@ export type UploadAttachHandler<TData = Record<string, unknown>> = (
 export type CellType = 'text' | 'calendar' | 'status' | 'tags' | 'compoundChipList' | 'boolean' | 'booleanSelected' | 'password' | 'passwordConfirm' | 'chipSelect' | 'currency' | 'richText' | 'numeric' | 'upload' | 'subGrid' | 'list' | 'actions';
 
 /**
+ * Storage contract for the per-user color palette used by the
+ * {@link CompoundChipListCell} color picker.
+ *
+ * The grid is intentionally storage-agnostic: consumers wire `read` and
+ * `write` to whatever persistence layer they prefer (cookie, localStorage,
+ * IndexedDB, remote backend, etc.). The grid invokes:
+ *
+ *   - `read()` once when a color picker mounts, to hydrate the user's
+ *     recently-used swatches.
+ *   - `write(colors)` whenever the user adds a new custom color, with the
+ *     resulting palette ordered most-recent first.
+ *
+ * Both methods return promises so async backends are first-class. A default
+ * in-memory adapter (per cell instance) is used when none is supplied.
+ */
+export interface PaletteAdapter {
+  /** Returns the user's recent custom colors, ordered most-recent first. */
+  read: () => Promise<string[]>;
+  /** Persists the updated palette. Called when the user picks a new custom color. */
+  write: (colors: string[]) => Promise<void>;
+}
+
+/**
  * Represents a selectable option in status, chip-select, or list columns.
  */
 export interface StatusOption {
@@ -456,6 +479,27 @@ export interface ColumnDef<TData = Record<string, unknown>> {
    * are recommended for a predictable, scannable grid.
    */
   overflow?: OverflowPolicy;
+
+  // Compound chip / color picker
+
+  /**
+   * Default swatches shown above the user palette in the
+   * {@link CompoundChipListCell} color picker. Hex strings, e.g.
+   * `['#ef4444', '#10b981', '#3b82f6']`. A small set of sensible defaults
+   * applies when omitted.
+   */
+  defaultThemeColors?: string[];
+  /**
+   * Persistence contract for the user's recently-picked custom colors.
+   * See {@link PaletteAdapter}. When omitted, the cell uses an in-memory
+   * adapter that resets per cell instance.
+   */
+  paletteAdapter?: PaletteAdapter;
+  /**
+   * Whether the user may pick custom colors via the picker's hex input.
+   * Defaults to `true` when not set.
+   */
+  allowCustomColor?: boolean;
 
   // Sub-grid
 

@@ -79,6 +79,21 @@ export { htmlToMarkdown } from './cells/RichTextCell';
 export { cellRendererMap, TagsCell } from './cells';
 export { StatusCell } from './cells/StatusCell';
 
+// Issue #95 — compound-chip color picker primitives reused by the MUI variant
+// and available to consumers building custom chip-styled cells.
+export {
+  ColorPickerPopover,
+  applyCustomColorToPalette,
+  createInMemoryPaletteAdapter,
+  normalizeHex,
+  DEFAULT_THEME_COLORS,
+  PALETTE_MAX,
+} from './cells/CompoundChipListCell';
+export type {
+  ColorPickerPopoverProps,
+  ChipItem,
+} from './cells/CompoundChipListCell';
+
 // Sub-components
 export { DataGridHeader } from './header';
 export type { DataGridHeaderProps } from './header';

@@ -361,6 +361,35 @@ export interface ColumnDef<TData = Record<string, unknown>> {
 
   /** Selectable options for `status`, `chipSelect`, and `list` cell types. */
   options?: StatusOption[];
+  /**
+   * Editable-dropdown contract for `status`/`chipSelect`/`list` columns
+   * (see GitHub #93). When supplied, the dropdown surfaces an inline
+   * "Add new…" input that calls `onAddOption(label)` when the user
+   * confirms a new entry. The returned {@link StatusOption} is appended
+   * to the column's option list (consumers are expected to round-trip
+   * any persistence — server enum mutation, cache refresh, etc. — inside
+   * the callback before resolving).
+   */
+  onAddOption?: (label: string) => Promise<StatusOption> | StatusOption;
+  /**
+   * Authorization gate for the per-option delete (×) affordance. Returning
+   * `false` (or a Promise that resolves false) hides/disables the delete
+   * control for the option in question, and suppresses the keyboard
+   * Delete shortcut.
+   *
+   * The contract is intentionally generic: consumers can wire arbitrary
+   * permission checks (e.g. a GraphQL user-type lookup cached for the
+   * session) inside this callback. The grid never reads user identity
+   * directly — it only honours the boolean answer.
+   */
+  canDeleteOption?: (option: StatusOption) => boolean | Promise<boolean>;
+  /**
+   * Side-effect callback invoked when the user confirms deletion of an
+   * option from the dropdown. The option is removed from the column's
+   * option list once the promise resolves. Consumers are expected to
+   * round-trip the deletion through any backing mutation before resolving.
+   */
+  onDeleteOption?: (option: StatusOption) => Promise<void> | void;
   /** Default cell value applied when a new row is created. */
   defaultValue?: unknown;
   /** Allows multiple selections in `chipSelect` columns. */

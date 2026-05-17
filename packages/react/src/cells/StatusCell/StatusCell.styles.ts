@@ -54,3 +54,49 @@ export const optionSwatch = (color: string): CSSProperties => ({
   background: color,
   flexShrink: 0,
 });
+
+// ---------------------------------------------------------------------------
+// Editable-dropdown affordances (see GitHub #93)
+// ---------------------------------------------------------------------------
+
+/** Trailing × button shown per-option when delete is authorised. */
+export const deleteButton: CSSProperties = {
+  marginLeft: 6,
+  padding: '0 4px',
+  border: 'none',
+  background: 'transparent',
+  color: '#6b7280',
+  cursor: 'pointer',
+  fontSize: 14,
+  lineHeight: 1,
+  borderRadius: 4,
+};
+
+/** Container row for the inline "Add new…" affordance. */
+export const addRow: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: '6px 6px 6px 10px',
+  borderTop: '1px solid #e5e7eb',
+  background: '#fafafa',
+};
+
+export const addInput: CSSProperties = {
+  flex: 1,
+  padding: '4px 6px',
+  fontSize: 12,
+  border: '1px solid #d1d5db',
+  borderRadius: 4,
+  outline: 'none',
+};
+
+export const addButton = (enabled: boolean): CSSProperties => ({
+  padding: '4px 8px',
+  fontSize: 12,
+  border: '1px solid #d1d5db',
+  borderRadius: 4,
+  background: enabled ? '#2563eb' : '#e5e7eb',
+  color: enabled ? '#fff' : '#9ca3af',
+  cursor: enabled ? 'pointer' : 'not-allowed',
+});

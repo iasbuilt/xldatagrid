@@ -65,6 +65,10 @@ export { PasswordConfirmCell, MISMATCH_MESSAGE } from './cells/PasswordConfirmCe
 // Migration helper for consumers upgrading from the HTML-backed RichTextCell.
 export { htmlToMarkdown } from './cells/RichTextCell';
 
+// Default cell renderer registry. Consumers can use this as a starting point
+// when supplying a custom `cellRenderers` prop to {@link DataGrid}.
+export { cellRendererMap, TagsCell } from './cells';
+
 // Sub-components
 export { DataGridHeader } from './header';
 export type { DataGridHeaderProps } from './header';

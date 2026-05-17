@@ -13,7 +13,7 @@
  */
 import React, { useMemo, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DataGrid, useCauslDevtools } from '@iasbuilt/datagrid-react';
+import { DataGrid, useCauslDevtools, useCauslDevtoolsForGraph } from '@iasbuilt/datagrid-react';
 import { createCausl, type Graph, type Node } from '@causl/core';
 import type { ColumnDef, FilterState } from '@iasbuilt/datagrid-core';
 import { makeEmployees, type Employee } from '../data';
@@ -96,6 +96,13 @@ function App() {
   // grid via config.graph; the grid registers its nodes on this graph
   // under the `employees:` namespace.
   const graph = useMemo(() => createCausl({ name: 'spa-integration-demo' }), []);
+
+  // Wire the shared graph to the Redux DevTools extension when present.
+  // No-op in headless browsers (e.g. Playwright's chromium) because the
+  // extension is not injected — `connectDevtools` short-circuits before
+  // allocating any subscription. Issue #105 acceptance: must not throw
+  // and must not break the grid + pivot atomicity contract below.
+  useCauslDevtoolsForGraph(graph, { name: 'spa-integration-demo' });
 
   // The DataGrid component itself uses useGrid(config) internally to
   // construct its model. We pass `graph` in `config` so the grid's

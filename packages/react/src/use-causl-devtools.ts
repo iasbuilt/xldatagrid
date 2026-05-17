@@ -24,7 +24,7 @@
  *   4. In your DataGrid container: call `useCauslDevtools(model)` (or
  *      pass `devtools: true` to `useGrid` once that wiring lands).
  *
- * @example
+ * @example Per-grid wiring (most apps)
  * ```tsx
  * import { useGrid, useCauslDevtools } from '@iasbuilt/datagrid-react';
  *
@@ -35,10 +35,23 @@
  * }
  * ```
  *
+ * @example Shared-graph (BYO-graph) wiring — call once at the app level
+ * ```tsx
+ * import { createCausl, useCauslDevtoolsForGraph } from '@iasbuilt/datagrid-react';
+ *
+ * function App() {
+ *   const graph = useMemo(() => createCausl({ name: 'app' }), []);
+ *   useCauslDevtoolsForGraph(graph, { name: 'app' });
+ *   return <>...grids that share `graph`...</>;
+ * }
+ * ```
+ *
  * @module use-causl-devtools
  */
 import { useEffect } from 'react';
-import type { GridModel } from '@iasbuilt/datagrid-core';
+// `@causl/core` types reach us via the core package's re-export so the
+// react package does not need a direct dep on the engine.
+import type { GridModel, Graph } from '@iasbuilt/datagrid-core';
 
 /**
  * Optional knobs forwarded to `connectDevtools`.
@@ -57,8 +70,22 @@ export interface UseCauslDevtoolsOptions {
   forceInDev?: boolean;
 }
 
-export function useCauslDevtools<TData extends Record<string, unknown>>(
-  model: GridModel<TData>,
+/**
+ * Bare-graph overload: connect any causl `Graph` (typically the
+ * app-owned one in a BYO-graph / SPA-integration setup) to the
+ * Redux DevTools extension.
+ *
+ * Prefer this when one `Graph` is shared across multiple grids
+ * (or across grids + app-level derived nodes). The bridge keeps
+ * one connection per graph and refcounts internally, so a single
+ * top-level call is sufficient — per-grid calls would each open
+ * a separate DevTools instance pointing at the same graph.
+ *
+ * Same prod-bail and dynamic-import contract as
+ * {@link useCauslDevtools}.
+ */
+export function useCauslDevtoolsForGraph(
+  graph: Graph,
   options: UseCauslDevtoolsOptions = {},
 ): void {
   useEffect(() => {
@@ -79,7 +106,7 @@ export function useCauslDevtools<TData extends Record<string, unknown>>(
     void import('@causl/devtools-bridge')
       .then((mod) => {
         if (cancelled) return;
-        disconnect = mod.connectDevtools(model.graph, {
+        disconnect = mod.connectDevtools(graph, {
           name: options.name,
         });
       })
@@ -93,5 +120,17 @@ export function useCauslDevtools<TData extends Record<string, unknown>>(
       cancelled = true;
       disconnect?.();
     };
-  }, [model, options.name, options.enabled, options.forceInDev]);
+  }, [graph, options.name, options.enabled, options.forceInDev]);
+}
+
+/**
+ * `GridModel` overload — thin wrapper that forwards `model.graph`
+ * to {@link useCauslDevtoolsForGraph}. Kept as the headline API
+ * because the per-grid case is the common one.
+ */
+export function useCauslDevtools<TData extends Record<string, unknown>>(
+  model: GridModel<TData>,
+  options: UseCauslDevtoolsOptions = {},
+): void {
+  useCauslDevtoolsForGraph(model.graph, options);
 }

@@ -490,11 +490,11 @@ If multiple grids share a single causl graph (BYO-graph), call the hook
 connection per graph and refcounts internally:
 
 ```tsx
-import { createCausl, useCauslDevtools, useGrid } from '@iasbuilt/datagrid-react';
+import { createCausl, useCauslDevtoolsForGraph, useGrid } from '@iasbuilt/datagrid-react';
 
 function App() {
   const graph = useMemo(() => createCausl({ name: 'app' }), []);
-  useCauslDevtools({ graph } as any, { name: 'app' });  // wraps the shared graph
+  useCauslDevtoolsForGraph(graph, { name: 'app' });  // wraps the shared graph
   return (
     <>
       <EmployeesGrid graph={graph} />
@@ -503,10 +503,6 @@ function App() {
   );
 }
 ```
-
-(The `as any` is a pragmatic cast — the hook accepts a full `GridModel`
-today; a follow-up will add a `useCauslDevtoolsForGraph(graph, options)`
-overload that accepts a bare graph.)
 
 #### What you'll see in DevTools
 

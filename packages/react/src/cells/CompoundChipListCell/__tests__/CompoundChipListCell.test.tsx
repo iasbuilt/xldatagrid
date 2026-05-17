@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { CompoundChipListCell } from '../CompoundChipListCell';
-import type { ColumnDef, CellValue } from '@iasbuilt/datagrid-core';
+import type { ColumnDef, CellValue, PaletteAdapter } from '@iasbuilt/datagrid-core';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -124,5 +124,102 @@ describe('CompoundChipListCell', () => {
     fireEvent.change(input, { target: { value: 'Updated' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByText('Updated')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Issue #95 — color sub-chip + picker
+  // -------------------------------------------------------------------------
+
+  it('renders an empty-state color sub-chip when no chip has a color', () => {
+    const { container } = render(
+      <CompoundChipListCell {...makeProps({ value: chipItems })} />,
+    );
+    const subChips = container.querySelectorAll<HTMLElement>('[data-color-sub-chip]');
+    expect(subChips).toHaveLength(chipItems.length);
+    // Empty state: data-color attribute is the empty string and no inline
+    // background is set on the dot.
+    for (const dot of subChips) {
+      expect(dot.dataset.color).toBe('');
+    }
+  });
+
+  it('renders a colored sub-chip when the chip has a color', () => {
+    const colored = [{ id: 'c1', label: 'Red', color: '#ef4444' }];
+    const { container } = render(
+      <CompoundChipListCell {...makeProps({ value: colored })} />,
+    );
+    const dot = container.querySelector<HTMLElement>('[data-color-sub-chip]');
+    expect(dot).not.toBeNull();
+    expect(dot!.dataset.color).toBe('#ef4444');
+  });
+
+  it('opens the picker popover when the color sub-chip is clicked in edit mode', () => {
+    render(<CompoundChipListCell {...makeProps({ isEditing: true, value: chipItems })} />);
+    const subChips = screen.getAllByRole('button', { name: /pick color|change color/i });
+    fireEvent.click(subChips[0]!);
+    expect(screen.getByRole('dialog', { name: /color picker/i })).toBeInTheDocument();
+  });
+
+  it('updates the chip color and routes custom colors through the palette adapter', async () => {
+    const onCommit = vi.fn();
+    const writeCalls: string[][] = [];
+    const adapter: PaletteAdapter = {
+      read: vi.fn().mockResolvedValue([]),
+      write: vi.fn().mockImplementation(async (c) => {
+        writeCalls.push(c);
+      }),
+    };
+    render(
+      <CompoundChipListCell
+        {...makeProps({
+          isEditing: true,
+          value: chipItems,
+          onCommit,
+          column: { paletteAdapter: adapter, defaultThemeColors: ['#000000'] },
+        })}
+      />,
+    );
+
+    // Open picker on the first chip
+    const subChips = screen.getAllByRole('button', { name: /pick color|change color/i });
+    fireEvent.click(subChips[0]!);
+
+    // Type a custom hex and add to palette
+    const hexInput = screen.getByLabelText(/hex color/i);
+    fireEvent.change(hexInput, { target: { value: '#3b82f6' } });
+    fireEvent.click(screen.getByRole('button', { name: /add to palette/i }));
+
+    // Adapter write should have been called with the new color at the front
+    await waitFor(() => {
+      expect(adapter.write).toHaveBeenCalled();
+    });
+    expect(writeCalls[0]).toEqual(['#3b82f6']);
+
+    // Commit and confirm the chip now carries the picked color
+    fireEvent.click(screen.getByRole('button', { name: /done/i }));
+    expect(onCommit).toHaveBeenCalled();
+    const committed = onCommit.mock.calls[0]![0] as Array<{ id: string; color?: string }>;
+    expect(committed[0]!.color).toBe('#3b82f6');
+  });
+
+  it('does NOT write theme colors through the adapter', async () => {
+    const adapter: PaletteAdapter = {
+      read: vi.fn().mockResolvedValue([]),
+      write: vi.fn().mockResolvedValue(undefined),
+    };
+    render(
+      <CompoundChipListCell
+        {...makeProps({
+          isEditing: true,
+          value: chipItems,
+          column: { paletteAdapter: adapter, defaultThemeColors: ['#3b82f6'] },
+        })}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: /pick color|change color/i })[0]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Theme color #3b82f6' }));
+    // Allow any microtasks from the (no-op) async path to settle.
+    await Promise.resolve();
+    expect(adapter.write).not.toHaveBeenCalled();
   });
 });

@@ -128,6 +128,17 @@ describe('Row Number Column', () => {
     expect(rowNumberCells[2]!.textContent).toBe('3');
   });
 
+  it('row-number cell sets a non-default cursor that communicates "select this row" (#74)', () => {
+    renderGrid({ chrome: { rowNumbers: true } });
+    const rowNumberCells = screen.getAllByTestId('chrome-row-number');
+    const defaultCursors = new Set(['auto', 'text', 'default', '']);
+    for (const cell of rowNumberCells) {
+      const cursor = (cell as HTMLElement).style.cursor;
+      expect(defaultCursors.has(cursor)).toBe(false);
+      expect(cursor.length).toBeGreaterThan(0);
+    }
+  });
+
   it('click on row number selects entire row', () => {
     renderGrid({ chrome: { rowNumbers: true } });
     const rowNumberCells = screen.getAllByTestId('chrome-row-number');

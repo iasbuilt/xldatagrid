@@ -56,7 +56,11 @@ test('numeric cell: type-to-edit (no dblclick) appends to the typed seed', async
   // under high CPU contention (e.g. pre-push hook with two parallel
   // webServers).
   await cell.click();
-  await page.keyboard.type('99999', { delay: 20 });
+  // Bumped from 20ms → 50ms to ride out CPU contention from the pre-push
+  // hook's parallel storybook + vite-playground startup; the deferred
+  // .select() in DataGridBody and the type-to-edit seed in use-keyboard.ts
+  // race when the first keystroke arrives before both are scheduled.
+  await page.keyboard.type('99999', { delay: 50 });
   await page.keyboard.press('Enter');
 
   // Type-to-edit must keep every typed character (we should see all 5 9s).

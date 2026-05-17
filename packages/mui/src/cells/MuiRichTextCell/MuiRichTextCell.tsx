@@ -408,10 +408,69 @@ export const MuiRichTextCell = React.memo(function MuiRichTextCell<TData = Recor
     [],
   );
 
+  /**
+   * Inserts a CommonMark hard line break (`  \n` — two trailing spaces
+   * followed by `\n`) at the textarea mirror's caret position and returns
+   * the new value + caret offset. The two-space prefix is the standard
+   * CommonMark hard-break encoding, which makes `react-markdown` render
+   * the break as `<br>` in display mode without needing a `remark-breaks`
+   * plugin. Used by the Alt+Enter handler so the existing draft-state
+   * plumbing (setDraft + draftRef) updates in lockstep with the
+   * DOM-level insertion.
+   */
+  const insertNewlineInTextarea = (ta: HTMLTextAreaElement): { value: string; caret: number } => {
+    const { value, selectionStart, selectionEnd } = ta;
+    const insertion = '  \n';
+    const next = value.slice(0, selectionStart) + insertion + value.slice(selectionEnd);
+    const caret = selectionStart + insertion.length;
+    return { value: next, caret };
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
       onCancel();
+      return;
+    }
+    // Enter handling — Excel parity (issue #97):
+    //   • ALT+ENTER inserts a soft line break (`\n`) at the caret without
+    //     committing the edit, regardless of whether the user is typing in
+    //     the contenteditable visual surface or the textarea mirror.
+    //   • SHIFT+ENTER preserves the existing native behaviour on each
+    //     surface (newline) so the legacy shortcut keeps working.
+    //   • Plain ENTER commits the current draft, matching the rest of the
+    //     grid's edit-end convention.
+    if (e.key === 'Enter') {
+      if (e.altKey) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        if (target === textareaRef.current && textareaRef.current) {
+          // Textarea mirror: splice `\n` into `.value` and reposition caret.
+          const ta = textareaRef.current;
+          const { value: next, caret } = insertNewlineInTextarea(ta);
+          ta.value = next;
+          ta.setSelectionRange(caret, caret);
+          setDraft(next);
+          draftRef.current = next;
+        } else {
+          // Contenteditable visual surface: splice the CommonMark hard
+          // line break (`  \n`) at the flat-text caret and let the layout
+          // effect re-project the visible text.
+          applyTransform((value, s, end) => {
+            const insertion = '  \n';
+            const next = value.slice(0, s) + insertion + value.slice(end);
+            const caret = s + insertion.length;
+            return { value: next, selectionStart: caret, selectionEnd: caret };
+          });
+        }
+        return;
+      }
+      if (e.shiftKey) {
+        // Let each surface insert its own native newline.
+        return;
+      }
+      e.preventDefault();
+      onCommit(draftRef.current);
       return;
     }
     const mod = e.ctrlKey || e.metaKey;

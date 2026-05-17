@@ -381,6 +381,19 @@ export const MuiRichTextCell = React.memo(function MuiRichTextCell<TData = Recor
     }
   }, [visibleText, isEditing]);
 
+  /**
+   * Applies a markdown-wrapping transform against whichever editing surface
+   * is currently active. Toolbar clicks and shortcuts fired from the
+   * contenteditable read its caret position via {@link getEditableSelection};
+   * shortcuts fired from the textarea use its native `selectionStart` /
+   * `selectionEnd`. Both paths write back to the shared `draft` state so the
+   * two surfaces stay in lock-step.
+   *
+   * `sourceEl` is the optional surface the transform should target. When
+   * omitted (toolbar clicks), the contenteditable is preferred and we fall
+   * back to the textarea — the toolbar's `onMouseDown` preventDefault keeps
+   * the prior surface focused so this preference matches user expectations.
+   */
   const applyTransform = useCallback(
     (
       transform: (
@@ -388,17 +401,45 @@ export const MuiRichTextCell = React.memo(function MuiRichTextCell<TData = Recor
         selStart: number,
         selEnd: number,
       ) => TextSelection,
+      sourceEl?: HTMLElement | null,
     ) => {
-      const el = editableRef.current;
-      if (!el) return;
-      const { start, end } = getEditableSelection(el);
+      const textarea = textareaRef.current;
+      const editable = editableRef.current;
+      const target =
+        sourceEl === textarea
+          ? 'textarea'
+          : sourceEl === editable
+            ? 'editable'
+            : editable
+              ? 'editable'
+              : textarea
+                ? 'textarea'
+                : null;
+      if (!target) return;
+
+      let start = 0;
+      let end = 0;
+      if (target === 'textarea' && textarea) {
+        start = textarea.selectionStart ?? 0;
+        end = textarea.selectionEnd ?? 0;
+      } else if (target === 'editable' && editable) {
+        const sel = getEditableSelection(editable);
+        start = sel.start;
+        end = sel.end;
+      }
       const next = transform(draftRef.current, start, end);
       setDraft(next.value);
       draftRef.current = next.value;
-      // Restore selection after React commits — the sync effect above runs
-      // first and replaces the text nodes, so we schedule the caret update
-      // one microtask later so it resolves against the fresh DOM.
+      // Restore selection after React commits — the surface's DOM is replaced
+      // by the projection effect above, so we schedule the caret update one
+      // frame later so it resolves against the fresh DOM.
       requestAnimationFrame(() => {
+        if (target === 'textarea' && textareaRef.current) {
+          const ta = textareaRef.current;
+          ta.focus();
+          ta.setSelectionRange(next.selectionStart, next.selectionEnd);
+          return;
+        }
         const surface = editableRef.current;
         if (!surface) return;
         surface.focus();
@@ -417,19 +458,22 @@ export const MuiRichTextCell = React.memo(function MuiRichTextCell<TData = Recor
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
     const key = e.key.toLowerCase();
+    const source = e.currentTarget as HTMLElement;
     if (key === 'b') {
       e.preventDefault();
-      applyTransform((value, s, end) =>
-        wrapSelection(value, s, end, '**', '**', 'bold text'),
+      applyTransform(
+        (value, s, end) => wrapSelection(value, s, end, '**', '**', 'bold text'),
+        source,
       );
     } else if (key === 'i') {
       e.preventDefault();
-      applyTransform((value, s, end) =>
-        wrapSelection(value, s, end, '*', '*', 'italic text'),
+      applyTransform(
+        (value, s, end) => wrapSelection(value, s, end, '*', '*', 'italic text'),
+        source,
       );
     } else if (key === 'k') {
       e.preventDefault();
-      applyTransform(insertLink);
+      applyTransform(insertLink, source);
     }
   };
 

@@ -104,6 +104,66 @@ describe('useGridInteraction — causl substrate contract', () => {
     expect(result.current.state.menu).toEqual({ type: 'columnVisibility' });
   });
 
+  // Issue #106 — the four ex-useState holders now route through causl. One
+  // assertion per new field that dispatch produces an `interaction:<action>`
+  // commit on the host graph.
+
+  it('toggleRowGroup emits a causl commit', () => {
+    const graph = createCausl({ name: 'host' });
+    const intents: string[] = [];
+    graph.subscribeCommits((c) => intents.push(c.intent));
+
+    const { result } = renderHook(() => useGridInteraction({ graph }));
+    act(() => result.current.toggleRowGroup('g1'));
+    expect(intents).toEqual(['interaction:toggle-row-group']);
+    expect(result.current.state.rowGroupExpanded.has('g1')).toBe(true);
+  });
+
+  it('startRowDrag emits a causl commit', () => {
+    const graph = createCausl({ name: 'host' });
+    const intents: string[] = [];
+    graph.subscribeCommits((c) => intents.push(c.intent));
+
+    const { result } = renderHook(() => useGridInteraction({ graph }));
+    act(() => result.current.startRowDrag('row-3', 3));
+    expect(intents).toEqual(['interaction:start-row-drag']);
+    expect(result.current.state.rowDrag).toEqual({
+      type: 'dragging',
+      sourceRowId: 'row-3',
+      sourceIndex: 3,
+    });
+  });
+
+  it('openFilterMenu emits a causl commit', () => {
+    const graph = createCausl({ name: 'host' });
+    const intents: string[] = [];
+    graph.subscribeCommits((c) => intents.push(c.intent));
+
+    const { result } = renderHook(() => useGridInteraction({ graph }));
+    const anchor = { top: 10, left: 20, bottom: 30, right: 40 };
+    act(() => result.current.openFilterMenu('email', anchor));
+    expect(intents).toEqual(['interaction:open-filter-menu']);
+    expect(result.current.state.filterMenu).toEqual({
+      type: 'open',
+      field: 'email',
+      anchor,
+    });
+  });
+
+  it('openConditionDialog emits a causl commit', () => {
+    const graph = createCausl({ name: 'host' });
+    const intents: string[] = [];
+    graph.subscribeCommits((c) => intents.push(c.intent));
+
+    const { result } = renderHook(() => useGridInteraction({ graph }));
+    act(() => result.current.openConditionDialog('amount'));
+    expect(intents).toEqual(['interaction:open-condition-dialog']);
+    expect(result.current.state.conditionDialog).toEqual({
+      type: 'open',
+      field: 'amount',
+    });
+  });
+
   it('two grids on the same graph have non-colliding interaction state via namespace', () => {
     const graph = createCausl({ name: 'host' });
     const a = renderHook(() => useGridInteraction({ graph, namespace: 'gridA' }));

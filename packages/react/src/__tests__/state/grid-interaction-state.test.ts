@@ -21,6 +21,10 @@ describe('gridInteractionReducer', () => {
     expect(init.hiddenColumns).toEqual(new Set());
     expect(init.frozenOverrides).toEqual({});
     expect(init.collapsedColumnGroups).toEqual(new Set());
+    expect(init.rowGroupExpanded).toEqual(new Set());
+    expect(init.rowDrag).toEqual({ type: 'idle' });
+    expect(init.filterMenu).toEqual({ type: 'closed' });
+    expect(init.conditionDialog).toEqual({ type: 'closed' });
   });
 
   // ---- Menu actions ----
@@ -268,6 +272,117 @@ describe('gridInteractionReducer', () => {
     it('sets the column order override', () => {
       const next = reduce(init, { type: 'set-column-order', order: ['c', 'b', 'a'] });
       expect(next.columnOrderOverride).toEqual(['c', 'b', 'a']);
+    });
+  });
+
+  // ---- Row group expand/collapse ----
+
+  describe('row group expand/collapse', () => {
+    it('toggle-row-group adds a group key when absent', () => {
+      const next = reduce(init, { type: 'toggle-row-group', groupId: 'g1' });
+      expect(next.rowGroupExpanded.has('g1')).toBe(true);
+    });
+
+    it('toggle-row-group removes the group key when present', () => {
+      let state = reduce(init, { type: 'toggle-row-group', groupId: 'g1' });
+      state = reduce(state, { type: 'toggle-row-group', groupId: 'g1' });
+      expect(state.rowGroupExpanded.has('g1')).toBe(false);
+    });
+
+    it('toggle-row-group does not mutate the original set', () => {
+      const first = reduce(init, { type: 'toggle-row-group', groupId: 'g1' });
+      const second = reduce(first, { type: 'toggle-row-group', groupId: 'g2' });
+      expect(first.rowGroupExpanded.has('g2')).toBe(false);
+      expect(second.rowGroupExpanded.has('g1')).toBe(true);
+      expect(second.rowGroupExpanded.has('g2')).toBe(true);
+    });
+
+    it('set-row-group-expanded replaces the expanded set', () => {
+      const next = reduce(init, {
+        type: 'set-row-group-expanded',
+        expanded: new Set(['a', 'b']),
+      });
+      expect(next.rowGroupExpanded).toEqual(new Set(['a', 'b']));
+    });
+  });
+
+  // ---- Row drag ----
+
+  describe('row drag', () => {
+    it('start-row-drag transitions to dragging with source info', () => {
+      const next = reduce(init, {
+        type: 'start-row-drag',
+        sourceRowId: 'row-7',
+        sourceIndex: 7,
+      });
+      expect(next.rowDrag).toEqual({
+        type: 'dragging',
+        sourceRowId: 'row-7',
+        sourceIndex: 7,
+      });
+    });
+
+    it('end-row-drag resets to idle when dragging', () => {
+      let state = reduce(init, {
+        type: 'start-row-drag',
+        sourceRowId: 'row-7',
+        sourceIndex: 7,
+      });
+      state = reduce(state, { type: 'end-row-drag' });
+      expect(state.rowDrag).toEqual({ type: 'idle' });
+    });
+
+    it('end-row-drag from idle is a no-op (returns same state ref)', () => {
+      const next = reduce(init, { type: 'end-row-drag' });
+      expect(next).toBe(init);
+    });
+  });
+
+  // ---- Filter menu ----
+
+  describe('filter menu', () => {
+    const anchor = { top: 10, left: 20, bottom: 30, right: 40 };
+
+    it('open-filter-menu sets filterMenu to open with field + anchor', () => {
+      const next = reduce(init, { type: 'open-filter-menu', field: 'email', anchor });
+      expect(next.filterMenu).toEqual({ type: 'open', field: 'email', anchor });
+    });
+
+    it('close-filter-menu resets filterMenu to closed when open', () => {
+      let state = reduce(init, { type: 'open-filter-menu', field: 'email', anchor });
+      state = reduce(state, { type: 'close-filter-menu' });
+      expect(state.filterMenu).toEqual({ type: 'closed' });
+    });
+
+    it('close-filter-menu from closed is a no-op (returns same state ref)', () => {
+      const next = reduce(init, { type: 'close-filter-menu' });
+      expect(next).toBe(init);
+    });
+
+    it('opening a filter menu for another field replaces the previous one', () => {
+      let state = reduce(init, { type: 'open-filter-menu', field: 'email', anchor });
+      state = reduce(state, { type: 'open-filter-menu', field: 'name', anchor });
+      expect(state.filterMenu).toEqual({ type: 'open', field: 'name', anchor });
+    });
+  });
+
+  // ---- Condition dialog ----
+
+  describe('condition dialog', () => {
+    it('open-condition-dialog sets dialog to open for a field', () => {
+      const next = reduce(init, { type: 'open-condition-dialog', field: 'amount' });
+      expect(next.conditionDialog).toEqual({ type: 'open', field: 'amount' });
+    });
+
+    it('close-condition-dialog resets to closed when open', () => {
+      let state = reduce(init, { type: 'open-condition-dialog', field: 'amount' });
+      state = reduce(state, { type: 'close-condition-dialog' });
+      expect(state.conditionDialog).toEqual({ type: 'closed' });
+    });
+
+    it('close-condition-dialog from closed is a no-op (returns same state ref)', () => {
+      const next = reduce(init, { type: 'close-condition-dialog' });
+      expect(next).toBe(init);
     });
   });
 

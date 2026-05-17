@@ -143,6 +143,32 @@ export function toDatagridThemeTokens(
     // Interaction
     '--dg-hover-bg': rowBgHover,
 
+    // Row-select visual stack (#75): when ANY row is fully selected the grid
+    // root carries `data-row-selected="true"` and three coordinated tints
+    // paint together to mirror Excel-365's row-select visual:
+    //   - the column header strip darkens (lower luminance in light, higher
+    //     in dark) so the user sees the selection's column context
+    //   - the row-number gutter cell paints a semi-transparent blue so the
+    //     gutter reads as "this row is selected" without losing the gutter
+    //     affordance
+    //   - the data cells in that row paint a DARKER semi-transparent blue
+    //     so the data area is the focal point (luminance(data) <
+    //     luminance(gutter) is the contract in `e2e/row-select-styling.spec.ts`).
+    //
+    // The values here mirror the literals in `datagrid-theme.css` so the
+    // preset inline-styles path and the cascading stylesheet path agree.
+    // Light/dark variants are picked by `lightThemeTokens`/`darkThemeTokens`
+    // below via `extra.colorScheme`.
+    '--dg-header-selected-bg': extra.colorScheme === 'dark' ? '#475569' : '#cbd5e1',
+    '--dg-row-number-selected-bg':
+      extra.colorScheme === 'dark'
+        ? 'rgba(96, 165, 250, 0.45)'
+        : 'rgba(96, 165, 250, 0.5)',
+    '--dg-row-selected-bg':
+      extra.colorScheme === 'dark'
+        ? 'rgba(59, 130, 246, 0.38)'
+        : 'rgba(59, 130, 246, 0.28)',
+
     // Typography / layout (unchanged by colour palette; preserved for back-compat)
     '--dg-cell-padding': '0 12px',
     '--dg-font-family': 'system-ui, sans-serif',

@@ -44,6 +44,13 @@ on:
 #     PR instead of stale palettes shipping silently.
 #   * `pnpm run test:scripts` — script-level tests (Node's built-in test
 #     runner) covering the sync-tokens CLI surface.
+#   * `pnpm lint`             — ESLint flat-config sweep across packages,
+#     playground, e2e specs, stories, and root config. Failing the build on
+#     errors is what closes issue #101's "lint scope decision" half. The
+#     `eslint.config.mjs` header documents the scope decision in full.
+#   * `pnpm lint:migration`   — `@causl/migration-check` against the full
+#     `packages/` tree, with a curated baseline subtracted. Closes the
+#     `causljs-migration-check` half of issue #101.
 jobs:
   verify-precommit-parity:
     name: verify
@@ -89,6 +96,20 @@ jobs:
     # Script-level tests (node --test) covering sync-tokens.mjs itself.
     - name: Run script tests
       run: pnpm run test:scripts
+
+    # ESLint (flat config) across packages, playground, e2e, and stories.
+    # Issue #101: this is the gate that keeps the lint-scope decision
+    # honest — adding a new package or untyped binding fails the build.
+    - name: Lint (pre-commit parity)
+      run: pnpm lint
+
+    # `@causl/migration-check` against the full `packages/` tree, with a
+    # curated baseline subtracted (`scripts/causl-migration-baseline.json`).
+    # Issue #101: replaces the previous `packages/core`-only scope with a
+    # full sweep; the wrapper script in `scripts/causl-migration-check.mjs`
+    # documents the baseline contract.
+    - name: Causl migration drift check (pre-commit parity)
+      run: pnpm lint:migration
 
   # YAML-lint guard for GitHub Actions workflows. `actionlint` statically
   # validates workflow syntax, expression usage, action references, and

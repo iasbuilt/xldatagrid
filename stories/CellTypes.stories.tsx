@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
+import { DataGrid, cellRendererMap } from '@iasbuilt/datagrid-react';
 import type { ColumnDef, StatusOption } from '@iasbuilt/datagrid-core';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';
@@ -119,6 +120,88 @@ export const AllCellTypes: StoryObj = {
       </div>
     </div>
   ),
+};
+
+// ---------------------------------------------------------------------------
+// Tags — multi-select dropdown (issue #94)
+// ---------------------------------------------------------------------------
+
+const tagOptions: StatusOption[] = [
+  { value: 'frontend', label: 'Frontend', color: '#3b82f6' },
+  { value: 'backend', label: 'Backend', color: '#10b981' },
+  { value: 'design', label: 'Design', color: '#a855f7' },
+  { value: 'qa', label: 'QA', color: '#f59e0b' },
+  { value: 'docs', label: 'Docs' },
+];
+
+interface TagRow {
+  id: string;
+  name: string;
+  labels: string[];
+}
+
+function makeTagRows(): TagRow[] {
+  // Two rows are enough for the e2e — one prefilled to assert the round-trip
+  // of pre-selected options, one empty to assert the picker flow from scratch.
+  return [
+    { id: '1', name: 'Ticket #1', labels: ['frontend'] },
+    { id: '2', name: 'Ticket #2', labels: [] },
+  ];
+}
+
+const tagColumns: ColumnDef<TagRow>[] = [
+  { id: 'name', field: 'name', title: 'Name', width: 160, cellType: 'text' },
+  {
+    id: 'labels',
+    field: 'labels',
+    title: 'Labels',
+    width: 320,
+    cellType: 'tags',
+    options: tagOptions,
+    editable: true,
+  },
+];
+
+/**
+ * Tag-list cell — multi-select variant of the dropdown cell (issue #94).
+ *
+ * Uses the React (non-MUI) `DataGrid` directly so the new `TagsCell`
+ * checkbox-picker is exercised. The MUI grid swaps in `MuiTagsCell` via its
+ * own renderer map, which is a separate concern.
+ */
+export const TagsMultiSelect: StoryObj = {
+  render: () => {
+    // Controlled data so chip-remove + multi-select commits round-trip into
+    // the visible cell — without this the cell would re-mount with the stale
+    // prop on every commit and lose the change.
+    const [rows, setRows] = React.useState<TagRow[]>(() => makeTagRows());
+    return (
+      <div style={storyContainer}>
+        <h2 style={styles.heading}>Tag list — multi-select (#94)</h2>
+        <p style={styles.subtitle}>
+          Double-click the Labels cell to open the multi-select picker. Click
+          chips' × in either mode to remove a tag.
+        </p>
+        <div style={gridContainer}>
+          <DataGrid
+            data={rows}
+            columns={tagColumns as any}
+            rowKey="id"
+            cellRenderers={cellRendererMap as any}
+            selectionMode="cell"
+            keyboardNavigation
+            onCellEdit={(_id, field, value) => {
+              setRows((prev) =>
+                prev.map((r) =>
+                  r.id === _id ? { ...r, [field]: value as string[] } : r
+                )
+              );
+            }}
+          />
+        </div>
+      </div>
+    );
+  },
 };
 
 // ---------------------------------------------------------------------------

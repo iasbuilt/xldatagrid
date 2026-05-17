@@ -925,13 +925,30 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
 
   // Row drag session is now part of the unified interaction node (issue #106).
   const rowDragState = interaction.state.rowDrag;
+  // Row-wide drop indicator state (#68). Tracks which row the pointer is
+  // currently over and on which edge (`'above'` / `'below'`) the bar should
+  // paint. Lifted out of `ChromeRowNumberCell` so the body's row container —
+  // which spans the full grid width — can render a continuous indicator,
+  // rather than the ~50px wide cell-local bar.
+  const [rowDropTarget, setRowDropTarget] = useState<{ rowId: string; half: 'above' | 'below' } | null>(null);
 
   const handleRowDragStart = useCallback((rowId: string, rowIndex: number) => {
     interaction.startRowDrag(rowId, rowIndex);
+    setRowDropTarget(null);
   }, [interaction]);
 
-  const handleRowDragOver = useCallback((_rowId: string, _rowIndex: number) => {
-    // Visual indicator could be added here in the future
+  const handleRowDragOver = useCallback((rowId: string, _rowIndex: number, half: 'above' | 'below') => {
+    // Cheap-equality skip: avoid re-rendering the body when neither the
+    // hovered row nor the resolved half has changed since the last dragover.
+    setRowDropTarget((prev) => (prev?.rowId === rowId && prev.half === half ? prev : { rowId, half }));
+  }, []);
+
+  const handleRowDragLeave = useCallback((rowId: string, _rowIndex: number) => {
+    // Only clear when the pointer left THIS row's cell. The chrome cell has
+    // already vetted child-boundary noise; we simply scope the clear to the
+    // currently tracked row so a fast move across rows doesn't accidentally
+    // wipe the indicator that the new row just set.
+    setRowDropTarget((prev) => (prev?.rowId === rowId ? null : prev));
   }, []);
 
   const handleRowDrop = useCallback((targetRowId: string, rowIndex: number) => {
@@ -945,7 +962,15 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
       });
       interaction.endRowDrag();
     }
+    setRowDropTarget(null);
   }, [model, rowDragState, onRowReorder, interaction]);
+
+  const handleRowDragEnd = useCallback((_rowId: string, _rowIndex: number) => {
+    // Clear on drag end so a cancelled drag (Escape, drop-off-target) does
+    // not leave a stale row-wide indicator (#68).
+    setRowDropTarget(null);
+    interaction.endRowDrag();
+  }, [interaction]);
 
   const handleSelectAll = useCallback(() => {
     model.selectAllCells();
@@ -1504,7 +1529,10 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
           onRowNumberClick={handleRowNumberClick}
           onRowDragStart={handleRowDragStart}
           onRowDragOver={handleRowDragOver}
+          onRowDragLeave={handleRowDragLeave}
           onRowDrop={handleRowDrop}
+          onRowDragEnd={handleRowDragEnd}
+          rowDropTarget={rowDropTarget}
           getRowBorder={chromeConfig?.getRowBorder}
           getRowBackground={chromeConfig?.getRowBackground}
           getChromeCellContent={chromeConfig?.getChromeCellContent}

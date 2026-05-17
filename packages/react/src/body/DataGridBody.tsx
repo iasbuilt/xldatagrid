@@ -358,8 +358,24 @@ export interface DataGridBodyProps<TData extends Record<string, unknown>> {
   rowNumberWidth?: number;
   onRowNumberClick?: (rowId: string, shiftKey: boolean, metaKey: boolean) => void;
   onRowDragStart?: (rowId: string, rowIndex: number) => void;
-  onRowDragOver?: (rowId: string, rowIndex: number) => void;
+  /**
+   * `dragover` on a row-number cell during a row drag. The `half` argument
+   * is resolved by the cell and forwarded so the grid can render a
+   * row-wide drop indicator (#68) at the same edge the cell-local bar uses.
+   */
+  onRowDragOver?: (rowId: string, rowIndex: number, half: 'above' | 'below') => void;
+  /** `dragleave` on a row-number cell — used to clear the row-wide indicator (#68). */
+  onRowDragLeave?: (rowId: string, rowIndex: number) => void;
   onRowDrop?: (rowId: string, rowIndex: number) => void;
+  /** `dragend` on a row-number cell — used to clear the row-wide indicator on cancel (#68). */
+  onRowDragEnd?: (rowId: string, rowIndex: number) => void;
+  /**
+   * Currently hovered drop target for row-drag-to-reorder (#68). When set,
+   * the body adds `data-drop-indicator` to the matching row container and
+   * renders a row-wide bar at the resolved edge. `null` while no drag is
+   * in progress.
+   */
+  rowDropTarget?: { rowId: string; half: 'above' | 'below' } | null;
 
   // Selection mode governs how a data-cell click is interpreted. In `'row'`
   // mode, clicks on data cells (issue #15) are routed through
@@ -741,7 +757,10 @@ export function DataGridBody<TData extends Record<string, unknown>>(
     onRowNumberClick,
     onRowDragStart,
     onRowDragOver,
+    onRowDragLeave,
     onRowDrop,
+    onRowDragEnd,
+    rowDropTarget,
     getRowBorder,
     getRowBackground,
     getChromeCellContent,
@@ -962,7 +981,45 @@ export function DataGridBody<TData extends Record<string, unknown>>(
         onSelect={onRowNumberClick}
         onDragStart={onRowDragStart}
         onDragOver={onRowDragOver}
+        onDragLeave={onRowDragLeave}
         onDrop={onRowDrop}
+        onDragEnd={onRowDragEnd}
+      />
+    );
+  };
+
+  // -------------------------------------------------------------------------
+  // Row-wide drop indicator (#68)
+  //
+  // Renders a 3px solid coloured bar at the top or bottom edge of the row
+  // container during a row-drag gesture. The row container is the
+  // containing block (the absolutely-positioned virtualised row uses
+  // `position: absolute`; the in-flow grouped row falls back to the
+  // outer document flow — either way the indicator's `position: absolute`
+  // anchors against the nearest positioned ancestor, which is the row).
+  //
+  // Colour is sourced from `--dg-row-drop-indicator-bg` (mapped through
+  // `styles/tokens/index.ts` from the shared header-dropIndicator token) so
+  // light / dark presets resolve correctly without per-component hex.
+  // `pointerEvents: none` keeps the bar from swallowing the dragover events
+  // that the row-number cell needs to update its half resolution.
+  // -------------------------------------------------------------------------
+  const renderRowDropIndicator = (half: 'above' | 'below'): React.ReactElement => {
+    const indicatorStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: 3,
+      background: 'var(--dg-row-drop-indicator-bg, #3584e4)',
+      pointerEvents: 'none',
+      zIndex: 7,
+      ...(half === 'above' ? { top: 0 } : { bottom: 0 }),
+    };
+    return (
+      <div
+        data-row-drop-indicator={half}
+        aria-hidden="true"
+        style={indicatorStyle}
       />
     );
   };
@@ -1368,6 +1425,10 @@ export function DataGridBody<TData extends Record<string, unknown>>(
         const rowBorder = getCachedResolverResult(getRowBorder, row, rowId, rowIdx) ?? null;
         const rowBorders = getRowSelectionBorders ? getRowSelectionBorders(rowId) : null;
         const rowIsFullySelected = rowBorders !== null;
+        const rowDropHalf =
+          rowDropTarget != null && rowDropTarget.rowId === rowId
+            ? rowDropTarget.half
+            : null;
         return (
           <React.Fragment key={rowId}>
             <div
@@ -1378,6 +1439,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               data-row-header="true"
               data-density={density}
               data-subgrid-expanded={isExpanded ? 'true' : undefined}
+              {...(rowDropHalf ? { 'data-drop-indicator': rowDropHalf } : {})}
               onContextMenu={(e) => {
                 if (e.target === e.currentTarget) {
                   onContextMenu(e, rowId, null);
@@ -1398,6 +1460,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
                 renderCell(col, colIdx, row, rowId, rowIdx, rowIsFullySelected, rowBg)
               )}
               {!rowNumberOnLeft && renderRowNumberCell(row, rowId, rowIdx, rowIsFullySelected)}
+              {rowDropHalf && renderRowDropIndicator(rowDropHalf)}
             </div>
             {isExpanded && renderSubGridExpansionRow && (
               // The expansion row is a spanning row that holds a nested grid.
@@ -1494,6 +1557,10 @@ export function DataGridBody<TData extends Record<string, unknown>>(
             borders: rowBorders,
           });
 
+      const rowDropHalf =
+        rowDropTarget != null && rowDropTarget.rowId === rowId
+          ? rowDropTarget.half
+          : null;
       return (
         <React.Fragment key={rowId}>
           <div
@@ -1504,6 +1571,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
             data-row-header="true"
             data-density={density}
             data-subgrid-expanded={isExpanded ? 'true' : undefined}
+            {...(rowDropHalf ? { 'data-drop-indicator': rowDropHalf } : {})}
             onContextMenu={(e) => {
               if (e.target === e.currentTarget) {
                 onContextMenu(e, rowId, null);
@@ -1524,6 +1592,7 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               renderCell(col, colIdx, row, rowId, rowIdx, rowIsFullySelected, rowBg)
             )}
             {!rowNumberOnLeft && renderRowNumberCell(row, rowId, rowIdx, rowIsFullySelected)}
+            {rowDropHalf && renderRowDropIndicator(rowDropHalf)}
           </div>
           {isExpanded && renderSubGridExpansionRow && (
             // See companion branch above for rationale: the nested grid is

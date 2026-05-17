@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
 import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig } from '@iasbuilt/datagrid-core';
-import { makeEmployees, defaultColumns, departmentOptions, Employee } from './data';
+import { makeEmployees, defaultColumns, Employee } from './data';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';
 

@@ -58,7 +58,7 @@ function ModelAccessor({ onModel }: { onModel: (m: any) => void }) {
 }
 
 function renderGridWithModel(overrides: Record<string, unknown> = {}) {
-  let modelRef: any = null;
+  const modelRef: any = null;
   const { container, rerender } = render(
     <DataGrid
       data={makeSortData()}

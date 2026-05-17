@@ -13,6 +13,8 @@
 #     - tests       (pnpm test)
 #     - tokens drift guard  (pnpm tokens:check)
 #     - script-level tests  (pnpm run test:scripts)
+#     - lint        (pnpm lint)                  # added in #101
+#     - migration drift  (pnpm lint:migration)   # added in #101
 #   lint-workflows / lint-workflows
 #     - actionlint on .github/workflows/*.yml
 #       Run locally only when actionlint is on PATH; otherwise warn so
@@ -42,6 +44,12 @@ pnpm tokens:check
 
 echo "==> pre-commit: running script-level tests"
 pnpm run test:scripts
+
+echo "==> pre-commit: running lint"
+pnpm lint
+
+echo "==> pre-commit: running causl migration drift check"
+pnpm lint:migration
 
 if command -v actionlint >/dev/null 2>&1; then
   echo "==> pre-commit: running actionlint on .github/workflows/*.yml"

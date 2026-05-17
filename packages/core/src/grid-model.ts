@@ -57,7 +57,7 @@ function decodeColumnState<TData>(raw: string, fallback: ColumnState<TData>): Co
   }
 }
 import {
-  GridConfig, GridState, CellAddress, CellValue, SortState,
+  GridConfig, CellAddress, CellValue, SortState,
   FilterState, Command, GridListener, RowKeyResolver, ColumnDef,
   GridEvent, GridEventType, GridCommands, ExtensionDefinition,
   GroupState,

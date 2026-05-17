@@ -149,10 +149,10 @@ export function createCellComments(config: CellCommentsConfig): ExtensionDefinit
     id: 'cell-comments',
     name: 'Cell Comments',
     version: '0.1.0',
-    init(ctx) {
+    init(_ctx) {
       // Reserved for future initialisation logic (e.g., subscribing to state changes)
     },
-    hooks(ctx) {
+    hooks(_ctx) {
       return [{
         event: 'contextMenu:open',
         phase: 'on',
@@ -191,7 +191,7 @@ export function createCellComments(config: CellCommentsConfig): ExtensionDefinit
  * @param cell - The cell address to query.
  * @returns The matching {@link CommentThread}, or `undefined` if none exists.
  */
-export function getThread(cell: CellAddress): CommentThread | undefined {
+export function getThread(_cell: CellAddress): CommentThread | undefined {
   return undefined; // placeholder
 }
 
@@ -205,6 +205,6 @@ export function getThread(cell: CellAddress): CommentThread | undefined {
  * @param cell - The cell address to check.
  * @returns `true` if the cell has at least one comment thread; `false` otherwise.
  */
-export function hasComments(cell: CellAddress): boolean {
+export function hasComments(_cell: CellAddress): boolean {
   return false; // placeholder
 }

@@ -4,12 +4,9 @@ import { MasterDetail, TransposedGrid } from '@iasbuilt/datagrid-react';
 import type { DetailComponentProps } from '@iasbuilt/datagrid-react';
 import type { ColumnDef, CellValue, GhostRowConfig, ContextMenuConfig, SelectionMode, TransposedField } from '@iasbuilt/datagrid-core';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Sort from '@mui/icons-material/Sort';
 import FilterList from '@mui/icons-material/FilterList';
 import Download from '@mui/icons-material/Download';
@@ -17,11 +14,11 @@ import Undo from '@mui/icons-material/Undo';
 import Redo from '@mui/icons-material/Redo';
 import {
   makeEmployees, defaultColumns, departmentOptions, Employee,
-  makeOrders, orderColumns, orderStatusOptions,
-  makeCellShowcaseData, cellShowcaseColumns, CellShowcase,
-  showcaseStatusOptions, priorityOptions,
+  makeOrders, orderColumns,
+  makeCellShowcaseData, cellShowcaseColumns,
+  showcaseStatusOptions,
 } from '../data';
-import { EventLog, gridContainer, btnStyle, btnActiveStyle, labelStyle } from '../helpers';
+import { EventLog, gridContainer, labelStyle } from '../helpers';
 
 // ---------------------------------------------------------------------------
 // Shared styles

@@ -25,7 +25,7 @@
     "docs:open": "typedoc && open docs/index.html",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
-    "lint:migration": "causl-migration-check packages/core",
+    "lint:migration": "node scripts/causl-migration-check.mjs",
     "chromatic": "chromatic --exit-zero-on-changes",
     "prepare": "husky"
   },
@@ -51,6 +51,7 @@
     "@vitest/coverage-v8": "3.0.9",
     "chromatic": "^13.3.5",
     "eslint": "~9.19.0",
+    "eslint-plugin-react-hooks": "^5",
     "eslint-plugin-storybook": "^10.3.5",
     "fake-indexeddb": "^6.0.1",
     "fast-check": "^3.22.0",
@@ -64,13 +65,9 @@
     "tsup": "~8.4.0",
     "typedoc": "^0.28.19",
     "typescript": "~5.7.3",
+    "typescript-eslint": "^8",
     "vite": "~6.1.0",
     "vitest": "~3.0.5",
     "vitest-axe": "^0.1.0"
-  },
-  "eslintConfig": {
-    "extends": [
-      "plugin:storybook/recommended"
-    ]
   }
 }

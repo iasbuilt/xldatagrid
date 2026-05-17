@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MuiDataGrid } from '@iasbuilt/datagrid-mui';
 import { createFormulaBar } from '@iasbuilt/datagrid-extensions';
-import type { FormulaBarConfig } from '@iasbuilt/datagrid-extensions';
 import type { CellAddress, CellValue } from '@iasbuilt/datagrid-core';
-import { makeEmployees, defaultColumns, Employee } from './data';
+import { makeEmployees, defaultColumns } from './data';
 import { storyContainer, gridContainer } from './helpers';
 import * as styles from './stories.styles';
 
@@ -130,8 +129,11 @@ export const Default: StoryObj = {
 
     const ext = useRef(createFormulaBar());
 
-    const handleCellSelect = useCallback((_addr: CellAddress, _val: CellValue) => {
-      // MuiDataGrid fires onCellSelect — we track it for the formula bar UI
+    const _handleCellSelect = useCallback((_addr: CellAddress, _val: CellValue) => {
+      // MuiDataGrid fires onCellSelect — we track it for the formula bar UI.
+      // Underscore-prefix marks this as deliberately unwired: the story drives
+      // selection via `handleSelectionChange` below; the cell-select callback
+      // is kept as documentation of the alternative subscription API.
     }, []);
 
     const handleSelectionChange = useCallback(

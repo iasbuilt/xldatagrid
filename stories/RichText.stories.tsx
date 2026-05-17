@@ -139,6 +139,124 @@ export const ViewportEdges: StoryObj = {
 };
 
 // ---------------------------------------------------------------------------
+// OverflowModes — issue #96 / Playwright target
+//
+// Renders a tight (180px) Notes column with one row per overflow mode so the
+// e2e spec at `e2e/issue-96-richtext-overflow-modes.spec.ts` can assert each
+// mode's visible behaviour against a fixed-width column. The rendered
+// markdown content (`LONG_LINE`) is wider than 180px when laid out on a
+// single line, which guarantees the mode-specific behaviours observably
+// trigger:
+//   - truncate row: text ends with a trailing ellipsis from the wrapper's
+//     `text-overflow: ellipsis` rule.
+//   - wrap row: cell height exceeds the default row height because the
+//     content wraps onto multiple lines.
+//   - fit row: computed font-size on the wrapper falls below the base
+//     13px so the entire single-line content remains visible.
+// ---------------------------------------------------------------------------
+
+interface OverflowRow {
+  id: string;
+  mode: string;
+  notes: string;
+}
+
+// One long markdown line — bold prefix + a long run of words so each mode's
+// effect is unambiguously visible at the column's 180px width.
+const LONG_LINE =
+  '**Quarterly audit complete** with extensive notes covering every single asset across all sites including the warehouse and the offsite storage facility.';
+
+const overflowRows: OverflowRow[] = [
+  { id: 'truncate', mode: 'truncate', notes: LONG_LINE },
+  { id: 'wrap', mode: 'wrap', notes: LONG_LINE },
+  { id: 'fit', mode: 'fit', notes: LONG_LINE },
+];
+
+const overflowColumns: ColumnDef<OverflowRow>[] = [
+  { id: 'mode', field: 'mode', title: 'Mode', width: 100 },
+  {
+    id: 'notes',
+    field: 'notes',
+    title: 'Notes',
+    width: 180,
+    cellType: 'richText',
+    richTextOverflow: 'truncate',
+  },
+];
+
+// Rebuild the columns with the per-row override applied. Each row uses a
+// column-def variant whose `richTextOverflow` matches its `mode`. The grid
+// itself doesn't natively support per-row column overrides, so we render
+// THREE single-row grids stacked vertically — one per mode — to keep the
+// fixture trivially deterministic for the Playwright assertions.
+function singleModeColumns(mode: 'truncate' | 'wrap' | 'fit'): ColumnDef<OverflowRow>[] {
+  return [
+    overflowColumns[0]!,
+    { ...overflowColumns[1]!, richTextOverflow: mode },
+  ];
+}
+
+const overflowSection: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 16,
+};
+
+const overflowGridWrap: React.CSSProperties = {
+  height: 80,
+  width: 320,
+  border: '1px solid #e2e8f0',
+  borderRadius: 6,
+  overflow: 'hidden',
+};
+
+const overflowWrapGridWrap: React.CSSProperties = {
+  // Wrap mode grows vertically — give the host container enough room so
+  // the test can observe the cell exceeding the default row height.
+  height: 200,
+  width: 320,
+  border: '1px solid #e2e8f0',
+  borderRadius: 6,
+  overflow: 'hidden',
+};
+
+export const OverflowModes: StoryObj = {
+  render: () => (
+    <div style={storyContainer}>
+      <h2 style={styles.heading}>Rich-text overflow modes (#96)</h2>
+      <p style={styles.subtitle}>
+        Per-column <code>richTextOverflow</code> controls how a rich-text cell fits content wider
+        than the column. Three modes are supported: <code>truncate</code> (default),
+        <code> wrap</code>, and <code>fit</code>.
+      </p>
+      <div style={overflowSection} data-testid="richtext-overflow-modes">
+        <div data-testid="grid-truncate" style={overflowGridWrap}>
+          <MuiDataGrid
+            data={[overflowRows[0]!]}
+            columns={singleModeColumns('truncate') as any}
+            rowKey="id"
+          />
+        </div>
+        <div data-testid="grid-wrap" style={overflowWrapGridWrap}>
+          <MuiDataGrid
+            data={[overflowRows[1]!]}
+            columns={singleModeColumns('wrap') as any}
+            rowKey="id"
+          />
+        </div>
+        <div data-testid="grid-fit" style={overflowGridWrap}>
+          <MuiDataGrid
+            data={[overflowRows[2]!]}
+            columns={singleModeColumns('fit') as any}
+            rowKey="id"
+          />
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+// ---------------------------------------------------------------------------
 // ShowFormattingDemo
 // ---------------------------------------------------------------------------
 

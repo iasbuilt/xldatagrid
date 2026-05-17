@@ -32,6 +32,7 @@ import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { CellValue, ColumnDef } from '@iasbuilt/datagrid-core';
+import { resolveRichTextOverflow, RICH_TEXT_FIT_MIN_FONT_PX } from '@iasbuilt/datagrid-core';
 import * as styles from './RichTextCell.styles';
 
 /**
@@ -175,6 +176,95 @@ const PLACEMENT_BUFFER = 8;
  * stays fully visible instead of overflowing the window.
  */
 const EDGE_ALIGN_MARGIN = 100;
+
+/**
+ * Display-mode subcomponent that renders the markdown body honoring the
+ * column's `richTextOverflow` mode (issue #96). Extracted out of the
+ * main {@link RichTextCell} so the `'fit'` mode can hang its own
+ * `ResizeObserver` off the wrapper ref without forcing a hook into the
+ * edit branch.
+ */
+function RichTextDisplay({
+  mode,
+  plainText,
+  markdown,
+  placeholder,
+}: {
+  mode: 'truncate' | 'wrap' | 'fit';
+  plainText: string;
+  markdown: string;
+  placeholder?: string;
+}): React.ReactElement {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Shrink-to-fit: observe both the wrapper width AND the rendered content
+  // width and scale the font-size down (within RICH_TEXT_FIT_MIN_FONT_PX)
+  // until the content fits. The computed font-size is pushed onto the
+  // wrapper as an inline style so `getComputedStyle` reports the scaled
+  // value — the e2e test asserts this exact contract.
+  useIsomorphicLayoutEffect(() => {
+    if (mode !== 'fit') return;
+    const wrapper = wrapperRef.current;
+    const content = contentRef.current;
+    if (!wrapper || !content || typeof ResizeObserver === 'undefined') return;
+
+    const BASE_FONT_PX = 13;
+    const rescale = () => {
+      // Reset to base before measuring so a previously-shrunk size doesn't
+      // pin us in a too-small state when the cell grows back.
+      wrapper.style.fontSize = `${BASE_FONT_PX}px`;
+      const available = wrapper.clientWidth;
+      if (available <= 0) return;
+      // `scrollWidth` reports the laid-out width of the content at the
+      // currently-applied font-size, so we can compute the scaling factor
+      // directly without an iterative shrink loop. We read from BOTH the
+      // wrapper (whose `overflow: hidden` makes its own `scrollWidth`
+      // include the off-cell content) and the content node so we get a
+      // reliable value regardless of react-markdown's internal element
+      // structure (an inline span may report 0).
+      const needed = Math.max(wrapper.scrollWidth, content.scrollWidth);
+      if (needed <= available) return;
+      const factor = available / needed;
+      const next = Math.max(RICH_TEXT_FIT_MIN_FONT_PX, BASE_FONT_PX * factor);
+      wrapper.style.fontSize = `${next}px`;
+    };
+
+    rescale();
+    const ro = new ResizeObserver(() => rescale());
+    ro.observe(wrapper);
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [mode, markdown]);
+
+  const wrapperStyle: React.CSSProperties =
+    mode === 'wrap'
+      ? { ...styles.displayContainer, ...styles.displayWrap }
+      : mode === 'fit'
+        ? { ...styles.displayContainer, ...styles.displayFit }
+        : { ...styles.displayContainer, ...styles.displayTruncate };
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={wrapperStyle}
+      title={plainText}
+      data-richtext-overflow={mode}
+    >
+      {markdown ? (
+        <div
+          ref={contentRef}
+          style={styles.markdownBody}
+          data-testid="richtext-rendered"
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+        </div>
+      ) : (
+        <span style={styles.placeholderText}>{placeholder ?? 'No content'}</span>
+      )}
+    </div>
+  );
+}
 
 /**
  * Datagrid cell renderer for Markdown rich-text content.
@@ -446,19 +536,20 @@ export const RichTextCell = React.memo(function RichTextCell<TData = Record<stri
     onCommit(draft);
   };
 
-  // Display mode: render markdown via react-markdown + remark-gfm.
+  // Display mode: render markdown via react-markdown + remark-gfm. The
+  // wrapper styles vary with the column's `richTextOverflow` mode (issue
+  // #96): `truncate` clips at a single line with ellipsis, `wrap` lets the
+  // cell grow vertically, `fit` engages the shrink-to-fit hook.
   if (!isEditing) {
     const plainText = markdownToPlainText(rawMarkdown);
+    const mode = resolveRichTextOverflow(column);
     return (
-      <div style={styles.displayContainer} title={plainText}>
-        {rawMarkdown ? (
-          <div style={styles.markdownBody} data-testid="richtext-rendered">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{rawMarkdown}</ReactMarkdown>
-          </div>
-        ) : (
-          <span style={styles.placeholderText}>{column.placeholder ?? 'No content'}</span>
-        )}
-      </div>
+      <RichTextDisplay
+        mode={mode}
+        plainText={plainText}
+        markdown={rawMarkdown}
+        placeholder={column.placeholder}
+      />
     );
   }
 

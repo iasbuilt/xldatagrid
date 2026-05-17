@@ -69,8 +69,15 @@ export * from './transposed';
 // Per-column search indexing: prefix trie, builders, and the IndexedDB persistence adapter.
 export * from './search-index';
 // Cell text overflow policy vocabulary + default policy resolver and middle-truncation helper.
-export type { OverflowPolicy, Density } from './overflow';
-export { truncateMiddle, truncateEnd, getDefaultOverflowPolicy } from './overflow';
+export type { OverflowPolicy, Density, RichTextOverflowMode } from './overflow';
+export {
+  truncateMiddle,
+  truncateEnd,
+  getDefaultOverflowPolicy,
+  resolveRichTextOverflow,
+  DEFAULT_RICH_TEXT_OVERFLOW,
+  RICH_TEXT_FIT_MIN_FONT_PX,
+} from './overflow';
 // Excel-style number-format presets + dual-unit sub-cell spec (issue #92).
 export type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
 export { formatNumber, isNumberFormatSpec } from './number-format';

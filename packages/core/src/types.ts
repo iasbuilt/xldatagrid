@@ -1,5 +1,5 @@
 import type { Validator } from './validators';
-import type { OverflowPolicy, Density, RichTextOverflowMode } from './overflow';
+import type { OverflowPolicy, RichTextOverflowMode } from './overflow';
 import type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
 
 /**

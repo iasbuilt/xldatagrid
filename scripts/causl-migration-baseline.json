@@ -1,42 +1,48 @@
 {
   "description": "Baseline allowlist for `causl-migration-check` (issue #101).\n\nThe tool's rules S-01 / S-04 / S-06 / S-07 cannot distinguish *local* UI state\n(cell-editor drafts, hover state, menu open/closed) from *shared* state that\nshould live in the global causl graph. Every entry below is a hand-reviewed\nfalse positive: a `useState` / sequential `setX` / `useEffect` pair that is\nscoped to a single component's local render lifecycle and is never read from\na shared context, prop dispatcher, or causl node.\n\nThe wrapper in `scripts/causl-migration-check.mjs` subtracts these from the\nlive report so `pnpm lint:migration` can run over the full `packages/` tree\nand still report 0 findings, while any *new* drift (a previously unflagged\nfile or a new line in a flagged file) fails the check.\n\nUpdating this file:\n  - When a baselined site is genuinely lifted into causl, delete the entry.\n  - When line numbers shift after a refactor, regenerate the affected entries\n    with `node scripts/causl-migration-check.mjs --update-baseline`.\n  - Do NOT add entries here to silence a new violation. The point of the\n    baseline is to freeze the known-broken set, not to let it grow.",
-  "count": 73,
+  "count": 79,
   "findings": [
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiCompoundChipListCell/MuiCompoundChipListCell.tsx",
-      "line": 54,
+      "line": 78,
       "column": 7
     },
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiCompoundChipListCell/MuiCompoundChipListCell.tsx",
-      "line": 78,
+      "line": 150,
       "column": 5
     },
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiCompoundChipListCell/MuiCompoundChipListCell.tsx",
-      "line": 89,
+      "line": 162,
       "column": 5
     },
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiCompoundChipListCell/MuiCompoundChipListCell.tsx",
-      "line": 130,
-      "column": 17
+      "line": 167,
+      "column": 5
+    },
+    {
+      "ruleId": "S-01",
+      "file": "mui/src/cells/MuiCompoundChipListCell/MuiCompoundChipListCell.tsx",
+      "line": 233,
+      "column": 19
     },
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiRichTextCell/MuiRichTextCell.tsx",
-      "line": 296,
+      "line": 392,
       "column": 7
     },
     {
       "ruleId": "S-01",
       "file": "mui/src/cells/MuiUploadCell/MuiUploadCell.tsx",
-      "line": 31,
-      "column": 5
+      "line": 91,
+      "column": 9
     },
     {
       "ruleId": "S-07",
@@ -47,19 +53,7 @@
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 350,
-      "column": 9
-    },
-    {
-      "ruleId": "S-07",
-      "file": "react/src/DataGrid.tsx",
-      "line": 351,
-      "column": 9
-    },
-    {
-      "ruleId": "S-07",
-      "file": "react/src/DataGrid.tsx",
-      "line": 352,
+      "line": 356,
       "column": 9
     },
     {
@@ -69,27 +63,21 @@
       "column": 9
     },
     {
+      "ruleId": "S-07",
+      "file": "react/src/DataGrid.tsx",
+      "line": 362,
+      "column": 9
+    },
+    {
       "ruleId": "S-01",
       "file": "react/src/DataGrid.tsx",
-      "line": 691,
+      "line": 696,
       "column": 7
     },
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 925,
-      "column": 9
-    },
-    {
-      "ruleId": "S-07",
-      "file": "react/src/DataGrid.tsx",
-      "line": 1016,
-      "column": 9
-    },
-    {
-      "ruleId": "S-07",
-      "file": "react/src/DataGrid.tsx",
-      "line": 1017,
+      "line": 933,
       "column": 9
     },
     {
@@ -201,27 +189,51 @@
       "column": 7
     },
     {
+      "ruleId": "S-07",
+      "file": "react/src/cells/CompoundChipListCell/ColorPickerPopover.tsx",
+      "line": 109,
+      "column": 9
+    },
+    {
+      "ruleId": "S-07",
+      "file": "react/src/cells/CompoundChipListCell/ColorPickerPopover.tsx",
+      "line": 110,
+      "column": 9
+    },
+    {
+      "ruleId": "S-07",
+      "file": "react/src/cells/CompoundChipListCell/ColorPickerPopover.tsx",
+      "line": 111,
+      "column": 9
+    },
+    {
       "ruleId": "S-01",
       "file": "react/src/cells/CompoundChipListCell/CompoundChipListCell.tsx",
-      "line": 125,
+      "line": 131,
       "column": 7
     },
     {
       "ruleId": "S-01",
       "file": "react/src/cells/CompoundChipListCell/CompoundChipListCell.tsx",
-      "line": 136,
+      "line": 140,
       "column": 5
     },
     {
       "ruleId": "S-01",
       "file": "react/src/cells/CompoundChipListCell/CompoundChipListCell.tsx",
-      "line": 161,
+      "line": 155,
       "column": 5
     },
     {
       "ruleId": "S-01",
       "file": "react/src/cells/CompoundChipListCell/CompoundChipListCell.tsx",
-      "line": 183,
+      "line": 167,
+      "column": 5
+    },
+    {
+      "ruleId": "S-01",
+      "file": "react/src/cells/CompoundChipListCell/CompoundChipListCell.tsx",
+      "line": 180,
       "column": 5
     },
     {
@@ -245,19 +257,25 @@
     {
       "ruleId": "S-01",
       "file": "react/src/cells/RichTextCell/RichTextCell.tsx",
-      "line": 253,
+      "line": 343,
       "column": 7
     },
     {
       "ruleId": "S-01",
       "file": "react/src/cells/StatusCell/StatusCell.tsx",
-      "line": 123,
+      "line": 204,
       "column": 5
     },
     {
       "ruleId": "S-01",
+      "file": "react/src/cells/StatusCell/StatusCell.tsx",
+      "line": 217,
+      "column": 7
+    },
+    {
+      "ruleId": "S-01",
       "file": "react/src/cells/TagsCell/TagsCell.tsx",
-      "line": 100,
+      "line": 139,
       "column": 7
     },
     {
@@ -293,7 +311,7 @@
     {
       "ruleId": "S-07",
       "file": "react/src/chrome/ChromeRowNumberCell.tsx",
-      "line": 81,
+      "line": 99,
       "column": 9
     },
     {
@@ -371,25 +389,43 @@
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 121,
+      "line": 134,
       "column": 11
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 124,
+      "line": 137,
       "column": 39
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 137,
+      "line": 150,
       "column": 43
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 153,
+      "line": 166,
+      "column": 11
+    },
+    {
+      "ruleId": "S-06",
+      "file": "react/src/state/use-grid-interaction.ts",
+      "line": 211,
+      "column": 40
+    },
+    {
+      "ruleId": "S-06",
+      "file": "react/src/state/use-grid-interaction.ts",
+      "line": 218,
+      "column": 11
+    },
+    {
+      "ruleId": "S-06",
+      "file": "react/src/state/use-grid-interaction.ts",
+      "line": 226,
       "column": 11
     },
     {

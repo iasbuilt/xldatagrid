@@ -6,8 +6,9 @@ this directory:
 
 1. Do not import `jotai` or `@causl/*` directly.
 2. Assert only on the public surface exposed from `@iasbuilt/datagrid-react`
-   (`useGrid`, `useGridWithAtoms`, `createAtomicGridModel`, `GridContext`) and
-   on the `GridModel` interface from `@iasbuilt/datagrid-core`.
+   (`useGrid`, `GridContext`) and on the `GridModel` interface from
+   `@iasbuilt/datagrid-core`. (The historical `useGridWithAtoms` and
+   `createAtomicGridModel` exports were removed in the post-`v0.1.0` major.)
 3. Cover the behaviors that have the highest risk of breaking during the swap:
    bundle return-shape, lifecycle (mount/unmount/destroy), mutation semantics
    (each action atom becomes a causl `commit`), and the EventBus dispatch

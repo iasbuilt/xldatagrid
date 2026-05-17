@@ -15,12 +15,11 @@ export { lightThemeTokens, darkThemeTokens, toDatagridThemeTokens } from './styl
 export { GhostRow } from './GhostRow';
 export { MasterDetail } from './MasterDetail';
 export type { MasterDetailProps, DetailComponentProps } from './MasterDetail';
-export { useGrid, useGridWithAtoms } from './use-grid';
+export { useGrid } from './use-grid';
 export { useCauslDevtools } from './use-causl-devtools';
 export type { UseCauslDevtoolsOptions } from './use-causl-devtools';
-export type { UseGridResult } from './use-grid';
 export { useGridStore } from './use-grid-store';
-export { GridContext, useGridContext, useGridAtomContext } from './context';
+export { GridContext, useGridContext } from './context';
 export type { GridContextValue } from './context';
 // Phase 3: Jotai shadow layer removed. createAtomicGridModel,
 // AtomicGridBundle, AtomicStore, and the GridAtomSystem/BaseAtoms/

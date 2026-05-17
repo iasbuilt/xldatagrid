@@ -67,27 +67,3 @@ export function useGrid<TData extends Record<string, unknown>>(
 
   return model;
 }
-
-/**
- * Backward-compatible alias retained for consumers that imported
- * `useGridWithAtoms` from the Jotai-era public API. Returns the same
- * shape callers got from `useGrid` (just `{ model }`); the `store` and
- * `atoms` fields no longer exist post-Phase-3.
- *
- * @deprecated Use {@link useGrid} directly. Will be removed in a future
- * major version.
- */
-export function useGridWithAtoms<TData extends Record<string, unknown>>(
-  config: GridConfig<TData>
-): UseGridResult<TData> {
-  return { model: useGrid(config) };
-}
-
-/**
- * Return type of {@link useGridWithAtoms}. Phase-3 reshape: contains
- * only `model`. The pre-Phase-3 `store` (Jotai vanilla store) and
- * `atoms` (3-tier base/derived/action atom system) are gone.
- */
-export interface UseGridResult<TData extends Record<string, unknown>> {
-  model: GridModel<TData>;
-}

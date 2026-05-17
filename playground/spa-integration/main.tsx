@@ -13,10 +13,23 @@
  */
 import React, { useMemo, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DataGrid } from '@iasbuilt/datagrid-react';
+import { DataGrid, useCauslDevtools } from '@iasbuilt/datagrid-react';
 import { createCausl, type Graph, type Node } from '@causl/core';
 import type { ColumnDef, FilterState } from '@iasbuilt/datagrid-core';
 import { makeEmployees, type Employee } from '../data';
+
+// ---------------------------------------------------------------------------
+// E2E hook (issue #107): when the playground is loaded with `?devtools=1`,
+// we wire `useCauslDevtools` into the grid's model. `forceInDev: true` is
+// required because the playground build sometimes emits a production-mode
+// bundle (Vite leaves `process.env.NODE_ENV` to whatever the host process
+// has), and we want the dynamic import to resolve regardless. The Playwright
+// smoke test at `e2e/issue-107-causl-devtools-smoke.spec.ts` exercises this
+// path end-to-end against a real browser.
+// ---------------------------------------------------------------------------
+const DEVTOOLS_ENABLED =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('devtools') === '1';
 
 // ---------------------------------------------------------------------------
 // Demo data + columns
@@ -138,6 +151,21 @@ function GridWithPivot({ graph }: { graph: Graph }) {
     graph,
     graphNamespace: 'employees',
   }), [graph]);
+
+  // Issue #107 — opt-in DevTools wiring via `?devtools=1`. We always call
+  // the hook (rules-of-hooks) but gate via `enabled` so the bridge import
+  // only resolves when the query-param is present. We wrap the shared
+  // graph as a model-shaped object because BYO-graph means the grid's
+  // nodes land on this graph; `useCauslDevtools` only touches `.graph`
+  // (see the documented "Sharing one DevTools panel across multiple
+  // grids" recipe in the README). `forceInDev: true` keeps the wiring
+  // active under playground builds where Vite may emit a production-mode
+  // bundle, which the e2e smoke test relies on.
+  useCauslDevtools({ graph } as never, {
+    name: 'spa-demo',
+    forceInDev: true,
+    enabled: DEVTOOLS_ENABLED,
+  });
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>

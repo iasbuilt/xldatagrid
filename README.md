@@ -444,6 +444,12 @@ short-circuits when the extension isn't installed, and the hook bails on
 `process.env.NODE_ENV === 'production'`. Production bundles tree-shake the
 entire dep out — verified by the bridge's `connectDevtools.zero-cost.test.ts`.
 
+**Executable spec**: the xldatagrid integration is pinned by
+[`e2e/issue-107-causl-devtools-smoke.spec.ts`](./e2e/issue-107-causl-devtools-smoke.spec.ts)
+(real-browser smoke test loading the SPA-integration playground at
+`/spa-integration/?devtools=1`) plus the unit coverage at
+`packages/react/src/__tests__/use-causl-devtools.test.tsx`.
+
 #### One-time setup per developer machine
 
 1. **Install the Redux DevTools extension** in your browser:

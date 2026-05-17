@@ -219,16 +219,22 @@ export function generateCsv(
 export function formatCellForExcel(value: unknown, column: ColumnDef): { value: unknown; format?: string } {
   if (value == null) return { value: '' };
 
+  // `ColumnDef.format` admits both legacy mask strings and the
+  // NumberFormatSpec object (issue #92). Excel export still emits a plain
+  // mask string — coerce the object form to undefined so we fall back to the
+  // defaults below; bespoke Excel masks for the new presets are deferred.
+  const formatMask = typeof column.format === 'string' ? column.format : undefined;
+
   if (typeof value === 'number') {
     // Apply currency format when the column is typed as currency
     if (column.cellType === 'currency') {
-      return { value, format: column.format ?? '$#,##0.00' };
+      return { value, format: formatMask ?? '$#,##0.00' };
     }
-    return { value, format: column.format ?? '0' };
+    return { value, format: formatMask ?? '0' };
   }
 
   if (value instanceof Date) {
-    return { value, format: column.format ?? 'yyyy-mm-dd' };
+    return { value, format: formatMask ?? 'yyyy-mm-dd' };
   }
 
   return { value: String(value) };

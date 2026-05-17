@@ -117,8 +117,12 @@ export const CurrencyCell = React.memo(function CurrencyCell<TData = Record<stri
   onCommit,
   onCancel,
 }: CurrencyCellProps<TData>) {
-  // Extract symbol and negative-red preference from the column format string
-  const { symbol, negativeRed } = parseCurrencyFormat(column.format);
+  // Extract symbol and negative-red preference from the column format string.
+  // `ColumnDef.format` now also admits a NumberFormatSpec object (issue #92,
+  // numeric columns only); ignore those here — currency columns predate that
+  // surface and continue to use the plain mask-string form.
+  const rawFormat = typeof column.format === 'string' ? column.format : undefined;
+  const { symbol, negativeRed } = parseCurrencyFormat(rawFormat);
   const numericValue = value === null || value === undefined ? '' : String(value);
   const [draft, setDraft] = useState(numericValue);
   const inputRef = useRef<HTMLInputElement>(null);

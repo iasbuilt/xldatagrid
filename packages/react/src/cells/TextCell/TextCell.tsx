@@ -131,7 +131,7 @@ export const TextCell = React.memo(function TextCell<TData = Record<string, unkn
     // Guard: ignore Enter/Tab while an IME candidate window is open.
     // isComposing is not in React's synthetic type but is present on the native event.
     if ((e.nativeEvent as KeyboardEvent).isComposing || e.keyCode === 229) return;
-    if (e.key === 'Enter' && !column.format?.includes('multiline')) {
+    if (e.key === 'Enter' && !(typeof column.format === 'string' && column.format.includes('multiline'))) {
       e.preventDefault();
       e.stopPropagation();
       onCommit(draft, 'down');
@@ -153,7 +153,7 @@ export const TextCell = React.memo(function TextCell<TData = Record<string, unkn
   // --- Multiline variant ---
   // Renders a <textarea> when the column format specifies multiline,
   // allowing newlines within the cell value.
-  if (column.format?.includes('multiline')) {
+  if ((typeof column.format === 'string' && column.format.includes('multiline'))) {
     return (
       <textarea
         ref={inputRef as React.Ref<HTMLTextAreaElement>}

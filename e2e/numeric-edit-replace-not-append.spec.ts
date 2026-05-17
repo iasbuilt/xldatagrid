@@ -50,8 +50,13 @@ test('numeric cell: type-to-edit (no dblclick) appends to the typed seed', async
   await cell.waitFor({ state: 'visible' });
 
   // Single-click to select the cell, then type-to-edit starting with "9".
+  // Small per-keystroke delay so the type-to-edit handler's deferred
+  // setSelectionRange (use-keyboard.ts) wins its race against
+  // DataGridBody's deferred .select() — without it, the test is flaky
+  // under high CPU contention (e.g. pre-push hook with two parallel
+  // webServers).
   await cell.click();
-  await page.keyboard.type('99999');
+  await page.keyboard.type('99999', { delay: 20 });
   await page.keyboard.press('Enter');
 
   // Type-to-edit must keep every typed character (we should see all 5 9s).

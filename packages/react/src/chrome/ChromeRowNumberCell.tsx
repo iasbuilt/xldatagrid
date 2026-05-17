@@ -56,8 +56,26 @@ export interface ChromeRowNumberCellProps {
   onContentClick?: (evt: MouseEvent, rowId: string, rowIndex: number) => void;
   onSelect: (rowId: string, shiftKey: boolean, metaKey: boolean) => void;
   onDragStart?: (rowId: string, rowIndex: number) => void;
-  onDragOver?: (rowId: string, rowIndex: number) => void;
+  /**
+   * Fires on `dragover`. The `half` argument resolves to `'above'` when the
+   * pointer is in the upper half of the cell and `'below'` otherwise — it is
+   * forwarded so the owning grid can render a row-wide drop indicator (see
+   * #68) in addition to the per-cell edge bar painted by this component.
+   */
+  onDragOver?: (rowId: string, rowIndex: number, half: 'above' | 'below') => void;
+  /**
+   * Fires when the pointer leaves this cell during a row drag (see #68). The
+   * grid uses this to clear any row-wide drop indicator it was rendering for
+   * this row, so the indicator does not persist past the dragleave boundary.
+   */
+  onDragLeave?: (rowId: string, rowIndex: number) => void;
   onDrop?: (rowId: string, rowIndex: number) => void;
+  /**
+   * Fires when the drag gesture ends — whether via a drop or cancel. The grid
+   * uses this to clear any row-wide drop indicator state so a cancelled drag
+   * (Escape, drop-off-target) does not leave a stale bar (#68).
+   */
+  onDragEnd?: (rowId: string, rowIndex: number) => void;
 }
 
 /**
@@ -68,7 +86,7 @@ export interface ChromeRowNumberCellProps {
  * short-circuit when reordering is disabled.
  */
 export function ChromeRowNumberCell(props: ChromeRowNumberCellProps) {
-  const { rowNumber, rowId, width, height, isSelected, reorderable, stickyLeft, contentText, contentIcon, onContentClick, onSelect, onDragStart, onDragOver, onDrop } = props;
+  const { rowNumber, rowId, width, height, isSelected, reorderable, stickyLeft, contentText, contentIcon, onContentClick, onSelect, onDragStart, onDragOver, onDragLeave, onDrop, onDragEnd } = props;
 
   // Per-cell drop-indicator state (#68). While a row drag hovers this cell we
   // record whether the pointer is in the upper or lower half so the cell can
@@ -160,8 +178,12 @@ export function ChromeRowNumberCell(props: ChromeRowNumberCellProps) {
     if (!reorderable) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDropHalf(resolveHalf(e.clientY));
-    onDragOver?.(rowId, rowNumber - 1);
+    const half = resolveHalf(e.clientY);
+    setDropHalf(half);
+    // Forward the resolved half so the owning grid can render a row-wide
+    // drop indicator at the same edge (#68). Keeping resolution here ensures
+    // the per-cell bar and the row-wide bar always agree on edge selection.
+    onDragOver?.(rowId, rowNumber - 1, half);
   }, [reorderable, rowId, rowNumber, onDragOver, resolveHalf]);
 
   // Drag-leave clears the indicator — but only when the pointer actually
@@ -174,7 +196,9 @@ export function ChromeRowNumberCell(props: ChromeRowNumberCellProps) {
     const related = e.relatedTarget as Node | null;
     if (el && related && el.contains(related)) return;
     setDropHalf(null);
-  }, [reorderable]);
+    // Notify the owning grid so it can clear any row-wide indicator (#68).
+    onDragLeave?.(rowId, rowNumber - 1);
+  }, [reorderable, onDragLeave, rowId, rowNumber]);
 
   // Drop: again `preventDefault` prevents the browser's default open/navigate
   // behaviour so the parent reorder callback owns the outcome.
@@ -189,7 +213,10 @@ export function ChromeRowNumberCell(props: ChromeRowNumberCellProps) {
   // cancelled drag (Escape, drop-off-target) doesn't leave a stale indicator.
   const handleDragEnd = useCallback(() => {
     setDropHalf(null);
-  }, []);
+    // Notify the owning grid so it can drop any row-wide indicator that
+    // outlived this cell's local dragleave (e.g. cancelled drag) (#68).
+    onDragEnd?.(rowId, rowNumber - 1);
+  }, [onDragEnd, rowId, rowNumber]);
 
   // Compose: base gutter style, selection overlay (wins the background), then
   // optional sticky-left pin. `stickyLeft === 0` is a valid pin position, so

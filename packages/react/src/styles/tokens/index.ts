@@ -128,6 +128,12 @@ export function toDatagridThemeTokens(
   const validationInfoBg = get('feedback.info.bg.strong');
   const validationInfoIcon = '#ffffff';
 
+  // Drop-indicator colour reused for both header (column reorder) and body
+  // (row reorder, issue #68) drag/drop affordances. Keeping a single token
+  // source ensures the column-reorder bar and the row-reorder bar always
+  // resolve to the same accent regardless of which theme is active.
+  const dropIndicator = get('datagrid.header.dropIndicator.default');
+
   return {
     // Primary / semantic
     '--dg-primary-color': primary,
@@ -193,6 +199,10 @@ export function toDatagridThemeTokens(
       extra.colorScheme === 'dark'
         ? 'rgba(59, 130, 246, 0.38)'
         : 'rgba(59, 130, 246, 0.28)',
+
+    // Drag-and-drop row reorder indicator (#68). Reuses the header drop
+    // indicator token so column-reorder and row-reorder bars share an accent.
+    '--dg-row-drop-indicator-bg': dropIndicator,
 
     // Typography / layout (unchanged by colour palette; preserved for back-compat)
     '--dg-cell-padding': '0 12px',

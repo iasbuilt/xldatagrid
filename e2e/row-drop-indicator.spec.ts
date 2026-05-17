@@ -24,7 +24,14 @@ const STORY_URL =
   '/iframe.html?viewMode=story&id=examples-chrome-columns--drag-reorder';
 
 async function waitForGrid(page: Page): Promise<void> {
-  await page.locator('[role="grid"]').first().waitFor({ state: 'visible' });
+  // Storybook iframe compile + hydrate occasionally exceeds the 7.5s default
+  // expect-timeout when consecutive tests in the same worker reuse the same
+  // dev-server worker; bumping the per-call wait avoids spurious failures
+  // without softening the assertion semantics.
+  await page
+    .locator('[role="grid"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 function rowNumberCell(page: Page, rowIndex: number): Locator {

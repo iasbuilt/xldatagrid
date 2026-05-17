@@ -298,6 +298,12 @@ export const dataRow = (opts: {
   ].filter(Boolean).join(', ') : '';
   return {
     display: 'flex',
+    // `position: relative` makes the row a containing block for the
+    // absolutely-positioned row-wide drop indicator bar (#68). Adding this
+    // unconditionally is harmless — the row's children are all in normal
+    // flow (no other absolute descendants depend on a wrapper as their
+    // containing block).
+    position: 'relative',
     height: opts.height,
     width: opts.totalWidth,
     borderBottom: '1px solid var(--dg-border-color, #e2e8f0)',

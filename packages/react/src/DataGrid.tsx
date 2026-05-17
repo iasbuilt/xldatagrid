@@ -346,8 +346,13 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   // Unified interaction state (replaces 12 separate useState calls)
   const interaction = useGridInteraction();
 
-  // Row grouping state (kept separate — different lifecycle)
-  const [rowGroupExpanded, setRowGroupExpanded] = useState<Set<string>>(new Set());
+  // Row grouping expand/collapse — now lives on the unified interaction node
+  // (issue #106). The local alias preserves call-site ergonomics while the
+  // setter routes through the causl-backed `setRowGroupExpanded` helper so
+  // every change is observable on the same graph as the other interaction
+  // state.
+  const rowGroupExpanded = interaction.state.rowGroupExpanded;
+  const setRowGroupExpanded = interaction.setRowGroupExpanded;
   const [rowGroupsInitialized, setRowGroupsInitialized] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, ValidationResult[]>>({});
   // Per-cell tooltip-open state. Keyed by `${rowId}:${field}`, value is the
@@ -890,12 +895,8 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
 
   // --- Body handlers ---
   const handleGroupToggle = useCallback((groupKey: string) => {
-    setRowGroupExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey);
-      return next;
-    });
-  }, []);
+    interaction.toggleRowGroup(groupKey);
+  }, [interaction]);
 
   // ---------------------------------------------------------------------------
   // Chrome column handlers
@@ -922,18 +923,19 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
     containerRef.current?.focus({ preventScroll: true });
   }, [model]);
 
-  const [rowDragState, setRowDragState] = useState<{ sourceRowId: string; sourceIndex: number } | null>(null);
+  // Row drag session is now part of the unified interaction node (issue #106).
+  const rowDragState = interaction.state.rowDrag;
 
   const handleRowDragStart = useCallback((rowId: string, rowIndex: number) => {
-    setRowDragState({ sourceRowId: rowId, sourceIndex: rowIndex });
-  }, []);
+    interaction.startRowDrag(rowId, rowIndex);
+  }, [interaction]);
 
   const handleRowDragOver = useCallback((_rowId: string, _rowIndex: number) => {
     // Visual indicator could be added here in the future
   }, []);
 
   const handleRowDrop = useCallback((targetRowId: string, rowIndex: number) => {
-    if (rowDragState) {
+    if (rowDragState.type === 'dragging') {
       model.moveRow(rowDragState.sourceIndex, rowIndex);
       onRowReorder?.({
         sourceRowId: rowDragState.sourceRowId,
@@ -941,9 +943,9 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
         fromIndex: rowDragState.sourceIndex,
         toIndex: rowIndex,
       });
-      setRowDragState(null);
+      interaction.endRowDrag();
     }
-  }, [model, rowDragState, onRowReorder]);
+  }, [model, rowDragState, onRowReorder, interaction]);
 
   const handleSelectAll = useCallback(() => {
     model.selectAllCells();
@@ -999,22 +1001,14 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
     disabled: !filterMenuEnabled,
   });
 
-  // `FilterMenuOpen` models the open state of the Excel dropdown: either a
-  // specific field is open (with the anchoring header-button rect needed for
-  // positioning) or no dropdown is open. Keeping it as a local discriminated
-  // value avoids polluting the shared interaction reducer with concerns that
-  // are specific to this feature.
-  type FilterMenuOpen = {
-    field: string;
-    anchor: { top: number; left: number; bottom: number; right: number };
-  } | null;
-
-  // `filterMenuOpen` tracks the Excel dropdown; `conditionDialogOpen` tracks
-  // the "Custom filter…" conditional dialog that the dropdown can launch. Only
-  // one of each can be open at a time, and the dropdown closes itself before
-  // the dialog opens.
-  const [filterMenuOpen, setFilterMenuOpen] = useState<FilterMenuOpen>(null);
-  const [conditionDialogOpen, setConditionDialogOpen] = useState<{ field: string } | null>(null);
+  // The Excel filter dropdown and the "Custom filter…" condition dialog both
+  // live on the unified interaction node (issue #106). Local discriminants
+  // capture the "open with field X (anchored at rect Y)" shape; we materialise
+  // them here as plain values for the JSX below so call sites stay readable.
+  const filterMenuOpen =
+    interaction.state.filterMenu.type === 'open' ? interaction.state.filterMenu : null;
+  const conditionDialogOpen =
+    interaction.state.conditionDialog.type === 'open' ? interaction.state.conditionDialog : null;
 
   // Opening the Excel dropdown must force the legacy column menu closed so
   // they never overlap visually or compete for keyboard focus. The anchor
@@ -1023,25 +1017,22 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   const handleFilterMenuTrigger = useCallback((field: string, anchor: DOMRect) => {
     // Mutual exclusion: close the legacy column menu when the Excel filter menu opens.
     interaction.closeMenu();
-    setFilterMenuOpen({
-      field,
-      anchor: {
-        top: anchor.top,
-        left: anchor.left,
-        bottom: anchor.bottom,
-        right: anchor.right,
-      },
+    interaction.openFilterMenu(field, {
+      top: anchor.top,
+      left: anchor.left,
+      bottom: anchor.bottom,
+      right: anchor.right,
     });
   }, [interaction]);
 
-  const closeFilterMenu = useCallback(() => setFilterMenuOpen(null), []);
+  const closeFilterMenu = useCallback(() => interaction.closeFilterMenu(), [interaction]);
 
   // Mirror of the mutual-exclusion rule on the other side: when the legacy
   // column menu is opened (from the header's caret button), the Excel filter
   // dropdown is dismissed so only one menu is visible per column at a time.
   const handleColumnMenuTrigger = useCallback((field: string) => {
     // Mutual exclusion: close the Excel filter menu when the legacy column menu opens.
-    setFilterMenuOpen(null);
+    interaction.closeFilterMenu();
     interaction.openColumnMenu(field);
   }, [interaction]);
 
@@ -1144,8 +1135,8 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   // builds richer predicates (between / starts-with / and-or chains). Opening
   // the dialog simply records which field it should target.
   const handleOpenConditionDialog = useCallback((field: string) => {
-    setConditionDialogOpen({ field });
-  }, []);
+    interaction.openConditionDialog(field);
+  }, [interaction]);
 
   // Receives the composite predicate produced by the condition dialog and
   // routes it through the same field-scoped replace helper so the behaviour
@@ -1445,9 +1436,9 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
             dataType={resolveColumnDataType(conditionDialogOpen.field)}
             onApply={(filter) => {
               handleApplyConditionFilter(conditionDialogOpen.field, filter);
-              setConditionDialogOpen(null);
+              interaction.closeConditionDialog();
             }}
-            onClose={() => setConditionDialogOpen(null)}
+            onClose={() => interaction.closeConditionDialog()}
           />
         )}
 

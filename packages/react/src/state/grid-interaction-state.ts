@@ -23,6 +23,30 @@ export type MenuState =
   | { type: 'column'; field: string }
   | { type: 'columnVisibility' };
 
+export type RowDragState =
+  | { type: 'idle' }
+  | { type: 'dragging'; sourceRowId: string; sourceIndex: number };
+
+/**
+ * Anchor rect captured at the moment the Excel filter dropdown opens.
+ * Stored as plain numbers (rather than a live DOMRect) so the popup
+ * positioning is decoupled from the header button's layout lifecycle.
+ */
+export interface FilterMenuAnchor {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+}
+
+export type FilterMenuState =
+  | { type: 'closed' }
+  | { type: 'open'; field: string; anchor: FilterMenuAnchor };
+
+export type ConditionDialogState =
+  | { type: 'closed' }
+  | { type: 'open'; field: string };
+
 // ---- Combined state ----
 
 export interface GridInteractionState {
@@ -36,6 +60,14 @@ export interface GridInteractionState {
   hiddenColumns: Set<string>;
   frozenOverrides: Record<string, 'left' | 'right' | null>;
   collapsedColumnGroups: Set<string>;
+  // Phase-3 follow-up (issue #106): the four ex-useState holders that
+  // also track "grid-domain interaction state" now live on the same
+  // node as menu/columnDrag/resize so SPA-side derivations can read
+  // them atomically alongside the rest.
+  rowGroupExpanded: Set<string>;
+  rowDrag: RowDragState;
+  filterMenu: FilterMenuState;
+  conditionDialog: ConditionDialogState;
 }
 
 export const initialGridInteractionState: GridInteractionState = {
@@ -49,6 +81,10 @@ export const initialGridInteractionState: GridInteractionState = {
   hiddenColumns: new Set(),
   frozenOverrides: {},
   collapsedColumnGroups: new Set(),
+  rowGroupExpanded: new Set(),
+  rowDrag: { type: 'idle' },
+  filterMenu: { type: 'closed' },
+  conditionDialog: { type: 'closed' },
 };
 
 // ---- Action union ----
@@ -75,7 +111,19 @@ export type GridInteractionAction =
   | { type: 'unfreeze-column'; field: string }
   | { type: 'toggle-column-group-collapse'; groupId: string }
   | { type: 'set-column-order'; order: string[] }
-  | { type: 'set-column-group-order'; order: string[] };
+  | { type: 'set-column-group-order'; order: string[] }
+  // Row grouping — caller-driven expand/collapse of grouped rows.
+  | { type: 'toggle-row-group'; groupId: string }
+  | { type: 'set-row-group-expanded'; expanded: Set<string> }
+  // Row drag — active row-reorder session.
+  | { type: 'start-row-drag'; sourceRowId: string; sourceIndex: number }
+  | { type: 'end-row-drag' }
+  // Excel-style column filter menu.
+  | { type: 'open-filter-menu'; field: string; anchor: FilterMenuAnchor }
+  | { type: 'close-filter-menu' }
+  // "Custom filter…" condition dialog.
+  | { type: 'open-condition-dialog'; field: string }
+  | { type: 'close-condition-dialog' };
 
 // ---- Helpers ----
 
@@ -273,6 +321,59 @@ export function gridInteractionReducer(
         ...state,
         columnGroupOrder: action.order,
       };
+
+    // -- Row group expand/collapse --
+    case 'toggle-row-group': {
+      const next = new Set(state.rowGroupExpanded);
+      if (next.has(action.groupId)) {
+        next.delete(action.groupId);
+      } else {
+        next.add(action.groupId);
+      }
+      return { ...state, rowGroupExpanded: next };
+    }
+
+    case 'set-row-group-expanded':
+      return { ...state, rowGroupExpanded: action.expanded };
+
+    // -- Row drag --
+    case 'start-row-drag':
+      return {
+        ...state,
+        rowDrag: {
+          type: 'dragging',
+          sourceRowId: action.sourceRowId,
+          sourceIndex: action.sourceIndex,
+        },
+      };
+
+    case 'end-row-drag':
+      // No-op short-circuit so the no-op end (e.g. a stray drop outside a
+      // valid target) does not generate a dead causl commit.
+      if (state.rowDrag.type === 'idle') return state;
+      return { ...state, rowDrag: { type: 'idle' } };
+
+    // -- Excel filter menu --
+    case 'open-filter-menu':
+      return {
+        ...state,
+        filterMenu: { type: 'open', field: action.field, anchor: action.anchor },
+      };
+
+    case 'close-filter-menu':
+      if (state.filterMenu.type === 'closed') return state;
+      return { ...state, filterMenu: { type: 'closed' } };
+
+    // -- Condition dialog --
+    case 'open-condition-dialog':
+      return {
+        ...state,
+        conditionDialog: { type: 'open', field: action.field },
+      };
+
+    case 'close-condition-dialog':
+      if (state.conditionDialog.type === 'closed') return state;
+      return { ...state, conditionDialog: { type: 'closed' } };
 
     default:
       return state;

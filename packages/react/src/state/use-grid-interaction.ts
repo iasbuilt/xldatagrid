@@ -30,6 +30,7 @@ import {
   initialGridInteractionState,
   type GridInteractionState,
   type GridInteractionAction,
+  type FilterMenuAnchor,
 } from './grid-interaction-state';
 
 export interface UseGridInteractionOptions {
@@ -70,6 +71,18 @@ export interface UseGridInteractionReturn {
   unfreezeColumn: (field: string) => void;
   toggleColumnGroupCollapse: (groupId: string) => void;
   setColumnOrder: (order: string[]) => void;
+  // Row groups
+  toggleRowGroup: (groupId: string) => void;
+  setRowGroupExpanded: (expanded: Set<string>) => void;
+  // Row drag session
+  startRowDrag: (sourceRowId: string, sourceIndex: number) => void;
+  endRowDrag: () => void;
+  // Excel filter menu
+  openFilterMenu: (field: string, anchor: FilterMenuAnchor) => void;
+  closeFilterMenu: () => void;
+  // Custom-filter condition dialog
+  openConditionDialog: (field: string) => void;
+  closeConditionDialog: () => void;
 }
 
 export function useGridInteraction(
@@ -182,6 +195,37 @@ export function useGridInteraction(
     (order: string[]) => dispatch({ type: 'set-column-order', order }),
     [dispatch],
   );
+  const toggleRowGroup = useCallback(
+    (groupId: string) => dispatch({ type: 'toggle-row-group', groupId }),
+    [dispatch],
+  );
+  const setRowGroupExpanded = useCallback(
+    (expanded: Set<string>) => dispatch({ type: 'set-row-group-expanded', expanded }),
+    [dispatch],
+  );
+  const startRowDrag = useCallback(
+    (sourceRowId: string, sourceIndex: number) =>
+      dispatch({ type: 'start-row-drag', sourceRowId, sourceIndex }),
+    [dispatch],
+  );
+  const endRowDrag = useCallback(() => dispatch({ type: 'end-row-drag' }), [dispatch]);
+  const openFilterMenu = useCallback(
+    (field: string, anchor: FilterMenuAnchor) =>
+      dispatch({ type: 'open-filter-menu', field, anchor }),
+    [dispatch],
+  );
+  const closeFilterMenu = useCallback(
+    () => dispatch({ type: 'close-filter-menu' }),
+    [dispatch],
+  );
+  const openConditionDialog = useCallback(
+    (field: string) => dispatch({ type: 'open-condition-dialog', field }),
+    [dispatch],
+  );
+  const closeConditionDialog = useCallback(
+    () => dispatch({ type: 'close-condition-dialog' }),
+    [dispatch],
+  );
 
   return useMemo(
     () => ({
@@ -206,6 +250,14 @@ export function useGridInteraction(
       unfreezeColumn,
       toggleColumnGroupCollapse,
       setColumnOrder,
+      toggleRowGroup,
+      setRowGroupExpanded,
+      startRowDrag,
+      endRowDrag,
+      openFilterMenu,
+      closeFilterMenu,
+      openConditionDialog,
+      closeConditionDialog,
     }),
     [
       state,
@@ -229,6 +281,14 @@ export function useGridInteraction(
       unfreezeColumn,
       toggleColumnGroupCollapse,
       setColumnOrder,
+      toggleRowGroup,
+      setRowGroupExpanded,
+      startRowDrag,
+      endRowDrag,
+      openFilterMenu,
+      closeFilterMenu,
+      openConditionDialog,
+      closeConditionDialog,
     ],
   );
 }

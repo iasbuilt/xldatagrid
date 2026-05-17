@@ -1,10 +1,52 @@
 import type { CSSProperties } from 'react';
 
+/**
+ * Base wrapper for the display-mode rich-text content. Concrete sizing /
+ * overflow behaviour comes from the per-mode style spreads below
+ * (`displayTruncate`, `displayWrap`, `displayFit`) so the three issue-#96
+ * modes share a single layout primitive.
+ */
 export const displayContainer: CSSProperties = {
-  overflow: 'hidden',
-  maxHeight: 40,
   fontSize: 13,
   lineHeight: '1.4',
+  width: '100%',
+};
+
+/**
+ * Truncate mode (issue #96, default): single line, clip with ellipsis.
+ * Uses `whiteSpace: 'nowrap'` + `textOverflow: 'ellipsis'` on the wrapper
+ * so the markdown body inherits the clipping behaviour even though its
+ * own `display: 'inline'` would otherwise pass through.
+ */
+export const displayTruncate: CSSProperties = {
+  overflow: 'hidden',
+  maxHeight: 40,
+  whiteSpace: 'nowrap',
+  textOverflow: 'ellipsis',
+};
+
+/**
+ * Wrap mode (issue #96): allow the cell to grow vertically as the
+ * markdown wraps to multiple lines. The grid row's effective height is
+ * computed as `max(rowHeight, contentHeight)` by the body layout, so the
+ * wrapper just removes the height cap and switches to wrap-on-spaces.
+ */
+export const displayWrap: CSSProperties = {
+  whiteSpace: 'normal',
+  wordWrap: 'break-word',
+  overflowWrap: 'break-word',
+};
+
+/**
+ * Fit mode (issue #96): no truncation, no wrapping — the
+ * RichTextDisplay shrink-to-fit hook scales `font-size` down (within
+ * RICH_TEXT_FIT_MIN_FONT_PX) until the content fits the available width.
+ * The wrapper itself just provides the single-line layout the hook
+ * measures against.
+ */
+export const displayFit: CSSProperties = {
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
 };
 
 export const placeholderText: CSSProperties = {

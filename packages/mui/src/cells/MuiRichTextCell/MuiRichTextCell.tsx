@@ -48,6 +48,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { CellRendererProps } from '@iasbuilt/datagrid-react';
+import { resolveRichTextOverflow, RICH_TEXT_FIT_MIN_FONT_PX } from '@iasbuilt/datagrid-core';
 
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -247,6 +248,101 @@ const rawSurfaceStyle: React.CSSProperties = {
   minHeight: '1.4em',
   background: '#f8fafc',
 };
+
+/**
+ * Display-mode subcomponent honoring the column's `richTextOverflow` mode
+ * (issue #96). Mirrors the React-package equivalent so behaviour is
+ * identical across the two adapters; the shrink-to-fit pass observes the
+ * wrapper + content via `ResizeObserver` and writes the computed
+ * `font-size` to the wrapper's inline style.
+ */
+function MuiRichTextDisplay({
+  mode,
+  plainText,
+  markdown,
+  placeholder,
+}: {
+  mode: 'truncate' | 'wrap' | 'fit';
+  plainText: string;
+  markdown: string;
+  placeholder?: string;
+}): React.ReactElement {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLSpanElement>(null);
+
+  useIsomorphicLayoutEffect(() => {
+    if (mode !== 'fit') return;
+    const wrapper = wrapperRef.current;
+    const content = contentRef.current;
+    if (!wrapper || !content || typeof ResizeObserver === 'undefined') return;
+    const BASE_FONT_PX = 13;
+    const rescale = () => {
+      wrapper.style.fontSize = `${BASE_FONT_PX}px`;
+      const available = wrapper.clientWidth;
+      if (available <= 0) return;
+      // Reading scrollWidth from both ensures we pick up the overflow even
+      // when react-markdown wraps the content in an inline element whose
+      // own scrollWidth would otherwise read 0.
+      const needed = Math.max(wrapper.scrollWidth, content.scrollWidth);
+      if (needed <= available) return;
+      const factor = available / needed;
+      const next = Math.max(RICH_TEXT_FIT_MIN_FONT_PX, BASE_FONT_PX * factor);
+      wrapper.style.fontSize = `${next}px`;
+    };
+    rescale();
+    const ro = new ResizeObserver(() => rescale());
+    ro.observe(wrapper);
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [mode, markdown]);
+
+  const wrapperSx =
+    mode === 'wrap'
+      ? {
+          width: '100%',
+          fontSize: 13,
+          lineHeight: 1.4,
+          whiteSpace: 'normal' as const,
+          wordWrap: 'break-word' as const,
+          overflowWrap: 'break-word' as const,
+        }
+      : mode === 'fit'
+        ? {
+            width: '100%',
+            fontSize: 13,
+            lineHeight: 1.4,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap' as const,
+          }
+        : {
+            width: '100%',
+            overflow: 'hidden',
+            maxHeight: 40,
+            fontSize: 13,
+            lineHeight: 1.4,
+            whiteSpace: 'nowrap' as const,
+            textOverflow: 'ellipsis' as const,
+          };
+
+  return (
+    <Box
+      ref={wrapperRef}
+      sx={wrapperSx}
+      title={plainText}
+      data-richtext-overflow={mode}
+    >
+      {markdown ? (
+        <Box component="span" ref={contentRef} data-testid="richtext-rendered">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+        </Box>
+      ) : (
+        <Box component="span" sx={{ color: 'text.secondary' }}>
+          {placeholder ?? 'No content'}
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 /**
  * MUI-based markdown rich-text cell renderer.
@@ -572,21 +668,14 @@ export const MuiRichTextCell = React.memo(function MuiRichTextCell<TData = Recor
 
   if (!isEditing) {
     const plainText = markdownToPlainText(rawMarkdown);
+    const mode = resolveRichTextOverflow(column);
     return (
-      <Box
-        sx={{ overflow: 'hidden', maxHeight: 40, fontSize: 13, lineHeight: 1.4 }}
-        title={plainText}
-      >
-        {rawMarkdown ? (
-          <Box component="span" data-testid="richtext-rendered">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{rawMarkdown}</ReactMarkdown>
-          </Box>
-        ) : (
-          <Box component="span" sx={{ color: 'text.secondary' }}>
-            {column.placeholder ?? 'No content'}
-          </Box>
-        )}
-      </Box>
+      <MuiRichTextDisplay
+        mode={mode}
+        plainText={plainText}
+        markdown={rawMarkdown}
+        placeholder={column.placeholder}
+      />
     );
   }
 

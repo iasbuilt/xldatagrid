@@ -22,6 +22,62 @@ export type OverflowPolicy =
 /** Grid density mode controlling row height + clamp eligibility. */
 export type Density = 'compact' | 'comfortable';
 
+/**
+ * Rich-text-specific overflow modes (issue #96).
+ *
+ * Rich-text cells (`cellType: 'richText'`) render Markdown via
+ * `react-markdown` and so cannot reuse the plain-text `OverflowPolicy`
+ * vocabulary verbatim — clamping a markdown block by `-webkit-line-clamp`
+ * works, but `truncate-middle` doesn't compose with marked-up content.
+ * Issue #96 narrows the rich-text vocabulary to the three modes users
+ * actually asked for:
+ *
+ *   - `'truncate'` — current behaviour; clip the rendered markdown at the
+ *     cell width and render a trailing ellipsis. Single-line, fixed row
+ *     height.
+ *   - `'wrap'`    — let the rendered markdown wrap to multiple lines; the
+ *     cell grows vertically and the effective row height becomes
+ *     `max(rowHeight, contentHeight)`.
+ *   - `'fit'`     — scale the rendered font-size down (within a sensible
+ *     minimum) until the content fits the available width without
+ *     truncation. Driven by a `ResizeObserver` + a CSS variable so the
+ *     scaling re-runs whenever the cell width or content changes.
+ */
+export type RichTextOverflowMode = 'truncate' | 'wrap' | 'fit';
+
+/**
+ * The default rich-text overflow mode applied when a column omits
+ * `richTextOverflow`. Matches the pre-#96 behaviour so existing grids
+ * upgrade with zero visual diff.
+ */
+export const DEFAULT_RICH_TEXT_OVERFLOW: RichTextOverflowMode = 'truncate';
+
+/**
+ * Minimum font-size (px) that the `'fit'` mode will scale the rendered
+ * markdown down to. Below this floor the content is allowed to overflow /
+ * clip instead, so cells with extreme content never produce unreadable
+ * 4-pixel text.
+ */
+export const RICH_TEXT_FIT_MIN_FONT_PX = 9;
+
+/**
+ * Returns the effective rich-text overflow mode for a column-like value
+ * carrying an optional `richTextOverflow` field. Falls back to
+ * {@link DEFAULT_RICH_TEXT_OVERFLOW} when omitted.
+ *
+ * Accepts a structural argument (not the full `ColumnDef`) so the helper
+ * lives in `@iasbuilt/datagrid-core` without taking a circular dep on
+ * higher-level packages and so unit tests can exercise the resolution
+ * without constructing a full grid column.
+ */
+export function resolveRichTextOverflow(
+  source?: { richTextOverflow?: RichTextOverflowMode | undefined } | null,
+): RichTextOverflowMode {
+  const v = source?.richTextOverflow;
+  if (v === 'truncate' || v === 'wrap' || v === 'fit') return v;
+  return DEFAULT_RICH_TEXT_OVERFLOW;
+}
+
 const ELLIPSIS = '\u2026';
 
 /**

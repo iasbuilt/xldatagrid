@@ -27,6 +27,11 @@
  */
 // @ts-expect-error — Phase B will add `overflow.ts` and re-export these.
 import { truncateMiddle, getDefaultOverflowPolicy } from '@iasbuilt/datagrid-core';
+import {
+  resolveRichTextOverflow,
+  DEFAULT_RICH_TEXT_OVERFLOW,
+  RICH_TEXT_FIT_MIN_FONT_PX,
+} from '@iasbuilt/datagrid-core';
 
 describe('truncateMiddle', () => {
   it('returns the input untouched when it already fits within maxChars', () => {
@@ -98,5 +103,61 @@ describe('getDefaultOverflowPolicy', () => {
 
   it('falls back to truncate-end when called with no argument', () => {
     expect(getDefaultOverflowPolicy()).toBe('truncate-end');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveRichTextOverflow — issue #96
+//
+// Rich-text cells take a narrower overflow vocabulary than plain-text cells
+// (`truncate | wrap | fit`) because `truncate-middle` and the clamp-N
+// variants don't compose with marked-up content. The resolver maps a
+// column-like input onto one of those three modes, falling back to
+// `truncate` when the column omits the field.
+// ---------------------------------------------------------------------------
+
+describe('resolveRichTextOverflow (issue #96)', () => {
+  it('defaults to truncate when the source is undefined', () => {
+    expect(resolveRichTextOverflow(undefined)).toBe('truncate');
+  });
+
+  it('defaults to truncate when the source is null', () => {
+    expect(resolveRichTextOverflow(null)).toBe('truncate');
+  });
+
+  it('defaults to truncate when richTextOverflow is omitted', () => {
+    expect(resolveRichTextOverflow({})).toBe('truncate');
+  });
+
+  it('returns truncate when richTextOverflow is explicitly truncate', () => {
+    expect(resolveRichTextOverflow({ richTextOverflow: 'truncate' })).toBe(
+      'truncate',
+    );
+  });
+
+  it('returns wrap when richTextOverflow is wrap', () => {
+    expect(resolveRichTextOverflow({ richTextOverflow: 'wrap' })).toBe('wrap');
+  });
+
+  it('returns fit when richTextOverflow is fit', () => {
+    expect(resolveRichTextOverflow({ richTextOverflow: 'fit' })).toBe('fit');
+  });
+
+  it('ignores unknown string values and falls back to the default mode', () => {
+    // Cast through `unknown` so the test exercises the runtime guard even
+    // though the type system would normally reject the value.
+    expect(
+      resolveRichTextOverflow({
+        richTextOverflow: 'banana' as unknown as 'wrap',
+      }),
+    ).toBe('truncate');
+  });
+
+  it('exposes the documented DEFAULT_RICH_TEXT_OVERFLOW constant', () => {
+    expect(DEFAULT_RICH_TEXT_OVERFLOW).toBe('truncate');
+  });
+
+  it('keeps the fit-mode font-size floor at the documented minimum (9px)', () => {
+    expect(RICH_TEXT_FIT_MIN_FONT_PX).toBe(9);
   });
 });

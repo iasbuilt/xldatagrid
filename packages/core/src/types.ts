@@ -1,5 +1,5 @@
 import type { Validator } from './validators';
-import type { OverflowPolicy, Density } from './overflow';
+import type { OverflowPolicy, Density, RichTextOverflowMode } from './overflow';
 import type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
 
 /**
@@ -500,6 +500,23 @@ export interface ColumnDef<TData = Record<string, unknown>> {
    * Defaults to `true` when not set.
    */
   allowCustomColor?: boolean;
+
+  /**
+   * How a `cellType: 'richText'` cell fits its rendered Markdown into the
+   * column width (issue #96). The plain-text {@link OverflowPolicy} does
+   * not compose cleanly with marked-up content (a `truncate-middle` slice
+   * could land mid-`<strong>`), so rich-text cells take a narrower
+   * vocabulary:
+   *
+   * - `'truncate'` (default): single-line clip with a trailing ellipsis.
+   * - `'wrap'`              : multi-line wrap, row grows to fit content.
+   * - `'fit'`               : scale font-size down (within a minimum) so
+   *                           the content fits the available width without
+   *                           truncation.
+   *
+   * Ignored on non-rich-text cells.
+   */
+  richTextOverflow?: RichTextOverflowMode;
 
   // Sub-grid
 

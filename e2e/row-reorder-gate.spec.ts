@@ -19,7 +19,14 @@ const STORY_URL =
   '/iframe.html?viewMode=story&id=examples-chrome-columns--drag-reorder';
 
 async function waitForGrid(page: Page): Promise<void> {
-  await page.locator('[role="grid"]').first().waitFor({ state: 'visible' });
+  // First-render of a Storybook iframe can take longer than the default 7.5s
+  // expect timeout — Vite's lazy-compile pipeline blocks the page until the
+  // story module graph is ready. 30s mirrors the navigationTimeout in
+  // playwright.config.ts and matches how the rest of the e2e suite waits.
+  await page
+    .locator('[role="grid"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 function rowNumberCell(page: Page, rowIndex: number): Locator {
@@ -53,8 +60,16 @@ async function dragFromTo(
 }
 
 test.describe('Row reorder gesture gate (#73)', () => {
+  // Storybook iframe cold-compile + grid render can easily exceed the default
+  // 30s per-test timeout when this spec is the first one to hit the story.
+  test.setTimeout(90_000);
+  // Storybook's dev server can drop connections under sustained parallel
+  // pressure (HMR socket churn); a single retry lets the worker reconnect
+  // without poisoning the suite.
+  test.describe.configure({ retries: 1 });
+
   test.beforeEach(async ({ page }) => {
-    await page.goto(STORY_URL);
+    await page.goto(STORY_URL, { timeout: 60_000 });
     await waitForGrid(page);
   });
 

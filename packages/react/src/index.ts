@@ -16,7 +16,7 @@ export { GhostRow } from './GhostRow';
 export { MasterDetail } from './MasterDetail';
 export type { MasterDetailProps, DetailComponentProps } from './MasterDetail';
 export { useGrid } from './use-grid';
-export { useCauslDevtools } from './use-causl-devtools';
+export { useCauslDevtools, useCauslDevtoolsForGraph } from './use-causl-devtools';
 export type { UseCauslDevtoolsOptions } from './use-causl-devtools';
 export { useGridStore } from './use-grid-store';
 export { GridContext, useGridContext } from './context';

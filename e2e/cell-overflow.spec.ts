@@ -28,7 +28,14 @@ import { test, expect, type Page } from '@playwright/test';
 const STORY_URL = '/iframe.html?viewMode=story&id=examples-celloverflow--default';
 
 async function waitForGrid(page: Page): Promise<void> {
-  await page.locator('[role="grid"]').first().waitFor({ state: 'visible' });
+  // Use a generous explicit timeout: on cold-start Vite still needs to
+  // compile the story bundle the first time it's requested in a given
+  // Storybook session, and the default 7.5s expect-timeout is not enough
+  // when the dev-server is competing with other parallel test workers.
+  await page
+    .locator('[role="grid"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 test.describe('Cell overflow — policies, reveal, density, a11y', () => {

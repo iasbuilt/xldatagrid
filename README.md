@@ -732,21 +732,27 @@ function MyGrid() {
 }
 ```
 
-### Fine-Grained Atom Subscriptions
+### Fine-Grained Subscriptions
 
 ```tsx
-import { useGridWithAtoms } from '@iasbuilt/datagrid-react';
+import { useGrid } from '@iasbuilt/datagrid-react';
 
 function MyGrid() {
-  const { model, store, atoms } = useGridWithAtoms(config);
+  const model = useGrid(config);
 
-  // Read derived state
-  const sortState = store.get(atoms.base.sortAtom);
-  const processedData = store.get(atoms.derived.processedDataAtom);
+  // Subscribe to a single causl node — re-runs only when that node changes.
+  React.useEffect(() => {
+    return model.graph.subscribe(model.nodes.processedData, (data) => {
+      console.log('processed rows changed:', data.length);
+    });
+  }, [model]);
 
   return <DataGrid model={model} />;
 }
 ```
+
+> The pre-`0.2.0` `useGridWithAtoms({ model, store, atoms })` bundle was
+> removed; reach into `model.graph` / `model.nodes` instead.
 
 ---
 

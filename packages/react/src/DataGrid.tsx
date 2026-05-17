@@ -16,7 +16,7 @@
  *   - This module owns only presentation state and event translation. The
  *     authoritative data model — rows, columns, sort/filter/group state, and
  *     edit transactions — lives in a `GridModel` from `@iasbuilt/datagrid-core`.
- *     The React tree bridges to it through {@link useGridWithAtoms} (which
+ *     The React tree bridges to it through {@link useGrid} (which
  *     instantiates the model) and {@link useGridStore} (which subscribes to it
  *     and produces snapshot-friendly state for rendering). All mutations flow
  *     through `model.*` methods; callbacks like `onSortChange` / `onFilterChange`
@@ -1191,7 +1191,7 @@ export function DataGrid<TData extends Record<string, unknown>>(props: DataGridP
   // grid. Recursion is handled by re-entering `<DataGrid>` with the parent
   // cell's array value as its `data` and the parent column's `subGridColumns`
   // as its `columns`. Every nested level receives its own `GridModel` via
-  // `useGridWithAtoms` so sort state, drag sessions, selection, and keyboard
+  // `useGrid` so sort state, drag sessions, selection, and keyboard
   // focus are scoped to that level.
   //
   // Depth tracking:

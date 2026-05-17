@@ -25,5 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Removed (BREAKING, from PR #22)
 - `DataGridColumnMenuProps.isSortingEnabled`, `.onSortAsc`, `.onSortDesc` — sort actions now live in the Excel-365 filter dropdown. Migrate by removing these props from `<DataGridColumnMenu>` usages.
 
+### Removed (BREAKING, issue #100)
+- `useGridWithAtoms`, the `UseGridResult` type, and `useGridAtomContext` have been deleted from `@iasbuilt/datagrid-react`. They were kept as deprecated aliases when the Jotai shadow layer was removed in Phase 3 and only ever returned `{ model }` post-Phase-3. Migration:
+  - Replace `useGridWithAtoms(config)` with `useGrid(config)` (now returns the `GridModel` directly — drop the `.model` access).
+  - Replace `useGridAtomContext()` with `useGridContext()` (also returns the `GridModel` directly).
+  - For the pre-Phase-3 `store` / `atoms` use cases, reach into `model.graph` / `model.nodes` (causl) for fine-grained per-node subscriptions.
+
 ## [0.1.0] — 2026-04-15
 - Initial release of xldatagrid monorepo.

@@ -1,14 +1,18 @@
 /**
- * Contract: `useGrid` / `useGridWithAtoms` lifecycle and stability.
+ * Contract: `useGrid` lifecycle and stability.
  *
  * Pins the React-side guarantees that consuming components rely on. Must pass
  * on both the current Jotai-backed implementation and the post-migration
  * causl-backed implementation.
+ *
+ * Note: the historical `useGridWithAtoms` alias was removed in the
+ * post-`v0.1.0` major (see CHANGELOG → "Removed (BREAKING)"); the section
+ * that used to assert its return shape lived here and was deleted with it.
  */
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { renderHook, act, render } from '@testing-library/react';
-import { useGrid, useGridWithAtoms } from '../../use-grid';
+import { useGrid } from '../../use-grid';
 import type { GridConfig } from '@iasbuilt/datagrid-core';
 
 type Row = { id: string; name: string; age: number };
@@ -104,21 +108,3 @@ describe('useGrid — lifecycle contract', () => {
   });
 });
 
-describe('useGridWithAtoms — return shape contract', () => {
-  it('returns an object with at least { model } and a single grid runtime', () => {
-    const { result } = renderHook(() => useGridWithAtoms(makeConfig()));
-    expect(result.current).toBeDefined();
-    expect(result.current.model).toBeDefined();
-    expect(typeof result.current.model.getState).toBe('function');
-  });
-
-  it('model identity is stable across re-renders', () => {
-    const { result, rerender } = renderHook(
-      ({ config }) => useGridWithAtoms(config),
-      { initialProps: { config: makeConfig() } }
-    );
-    const first = result.current.model;
-    rerender({ config: makeConfig() });
-    expect(result.current.model).toBe(first);
-  });
-});

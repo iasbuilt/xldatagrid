@@ -40,16 +40,3 @@ export function useGridContext<TData extends Record<string, unknown>>(): GridMod
   if (!ctx) throw new Error('useGridContext must be used within a DataGrid');
   return ctx.model as GridModel<TData>;
 }
-
-/**
- * Backward-compatible alias for {@link useGridContext}. The pre-Phase-3
- * version returned a `{ model, store, atoms }` bundle; the latter two
- * fields no longer exist. New code should use {@link useGridContext}.
- *
- * @deprecated Use {@link useGridContext}.
- */
-export function useGridAtomContext<TData extends Record<string, unknown>>(): GridContextValue<TData> {
-  const ctx = useContext(GridContext);
-  if (!ctx) throw new Error('useGridAtomContext must be used within a DataGrid');
-  return ctx as unknown as GridContextValue<TData>;
-}

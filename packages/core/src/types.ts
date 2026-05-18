@@ -1,6 +1,7 @@
 import type { Validator } from './validators';
 import type { OverflowPolicy, RichTextOverflowMode } from './overflow';
 import type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
+import type { EditCause } from './editing';
 
 /**
  * Core type definitions for the datagrid system.
@@ -1565,8 +1566,11 @@ export interface GridCommands {
    * Enters edit mode for the specified cell.
    *
    * @param cell - The cell to begin editing.
+   * @param cause - Optional initiator (`dblclick`, `enter`, `f2`, `click`,
+   *   `typeToEdit`, `programmatic`). Editor mounts read this to decide
+   *   whether to take over input selection. Defaults to `'programmatic'`.
    */
-  beginEdit: (cell: CellAddress) => Promise<void>;
+  beginEdit: (cell: CellAddress, cause?: EditCause) => Promise<void>;
   /** Commits the current in-progress cell edit. */
   commitEdit: () => Promise<void>;
   /** Discards the current in-progress cell edit. */

@@ -50,17 +50,15 @@ test('numeric cell: type-to-edit (no dblclick) appends to the typed seed', async
   await cell.waitFor({ state: 'visible' });
 
   // Single-click to select the cell, then type-to-edit starting with "9".
-  // Small per-keystroke delay so the type-to-edit handler's deferred
-  // setSelectionRange (use-keyboard.ts) wins its race against
-  // DataGridBody's deferred .select() — without it, the test is flaky
-  // under high CPU contention (e.g. pre-push hook with two parallel
-  // webServers).
+  // Issue #133 — the previous implementation needed `delay: 50` per
+  // keystroke to ride out a rAF race between `use-keyboard`'s seed-
+  // then-place-cursor sequence and `DataGridBody`'s mount-time
+  // `el.select()`. The fix threads an `EditCause` through `beginEdit`
+  // so the body opts out of `select()` when the cause is `typeToEdit`,
+  // letting the keyboard handler own input selection unambiguously.
+  // With the race removed we type at the natural Playwright rate.
   await cell.click();
-  // Bumped from 20ms → 50ms to ride out CPU contention from the pre-push
-  // hook's parallel storybook + vite-playground startup; the deferred
-  // .select() in DataGridBody and the type-to-edit seed in use-keyboard.ts
-  // race when the first keystroke arrives before both are scheduled.
-  await page.keyboard.type('99999', { delay: 50 });
+  await page.keyboard.type('99999');
   await page.keyboard.press('Enter');
 
   // Type-to-edit must keep every typed character (we should see all 5 9s).

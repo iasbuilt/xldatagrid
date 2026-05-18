@@ -1202,7 +1202,11 @@ export function DataGridBody<TData extends Record<string, unknown>>(
           onBlur: () => onValidationTooltip?.(rowId, col.field, 'focus', false),
           onDoubleClick: () => {
             if (col.editable !== false && !readOnly) {
-              model.beginEdit(cellAddr);
+              // Pass cause='dblclick' so the editor mount knows to take
+              // over the input selection (issue #133). Without a cause,
+              // the mount-time `select()` and `use-keyboard`'s type-to-
+              // edit cursor placement raced under CPU contention.
+              model.beginEdit(cellAddr, 'dblclick');
             }
           },
         }}
@@ -1255,15 +1259,35 @@ export function DataGridBody<TData extends Record<string, unknown>>(
               // Clear the cancellation flag each time a new edit input
               // mounts, so a previous Esc doesn't silence the next commit.
               if (el) inlineEditCancelledRef.current = false;
-              // Select the existing text on mount so a `dblclick` → type
-              // sequence REPLACES the value instead of appending. Without
-              // this, `autoFocus` lands the cursor at the end of the text
-              // and a numeric cell containing "138739" + typing "77777"
-              // becomes "13873977777" — i.e. catastrophic drift on edit.
-              // The deferred-to-next-frame call ensures the select runs
-              // after the browser's native focus/dblclick selection logic,
-              // which would otherwise override a sync call.
-              if (el) requestAnimationFrame(() => el.select());
+              if (!el) return;
+              // Issue #133 — branch on the edit cause so we don't race
+              // `use-keyboard`'s type-to-edit seed.
+              //
+              // For dblclick / F2 / Enter / click / programmatic the
+              // editor takes over input selection so a subsequent
+              // keystroke REPLACES the value rather than appending
+              // (without this, `autoFocus` lands the cursor at the end
+              // of "138739" and typing "77777" produces "13873977777" —
+              // catastrophic drift on edit).
+              //
+              // For `typeToEdit`, `use-keyboard` is mid-sequence: it
+              // has already scheduled a synthetic `input` event with
+              // the typed character and a `setSelectionRange(len, len)`
+              // cursor placement after the seed. Calling `el.select()`
+              // here would clobber that cursor placement and the
+              // subsequent keystroke would REPLACE the seed character
+              // rather than appending to it. The pre-#133 mitigation
+              // was a flaky `delay: 50` in the e2e spec; the real fix
+              // is to stay out of the way when the cause is type-to-
+              // edit (the seed character already drives the desired
+              // "replace existing value, then append" semantic).
+              const cause = model.getState().editing.cause;
+              if (cause === 'typeToEdit') return;
+              // For every other cause we still defer to next frame so
+              // the browser's native focus/dblclick selection logic
+              // (which fires synchronously on `autoFocus`) does not
+              // override a sync `select()` call.
+              requestAnimationFrame(() => el.select());
             }}
             onBlur={e => {
               if (inlineEditCancelledRef.current) return;

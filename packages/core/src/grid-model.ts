@@ -75,7 +75,7 @@ import {
   extendSelection, extendRowSelection, clearSelection, selectAll, toggleRowSelection,
 } from './selection';
 import {
-  createEditingState, EditingState, beginEdit as beginEditState,
+  createEditingState, EditingState, EditCause, beginEdit as beginEditState,
   commitEdit as commitEditState, cancelEdit as cancelEditState,
 } from './editing';
 import {
@@ -135,7 +135,15 @@ export interface GridModel<TData = Record<string, unknown>> {
     cell: { rowId: string; field: F },
     value: TData[F],
   ): Promise<void>;
-  beginEdit(cell: CellAddress): void;
+  /**
+   * Enters edit mode for the specified cell.
+   *
+   * @param cell - The cell to begin editing.
+   * @param cause - How the edit was initiated. Editor mounts read this
+   *   to decide whether to take over input selection on mount; see
+   *   {@link EditCause}. Defaults to `'programmatic'`.
+   */
+  beginEdit(cell: CellAddress, cause?: EditCause): void;
   commitEdit(): Promise<void>;
   cancelEdit(): void;
   insertRow(index: number, data?: Record<string, unknown>): Promise<void>;
@@ -387,7 +395,7 @@ export function createGridModel<TData extends Record<string, unknown>>(
         cell as { rowId: string; field: Extract<keyof TData, string> },
         value as TData[Extract<keyof TData, string>],
       ),
-    beginEdit: async (cell) => model.beginEdit(cell),
+    beginEdit: async (cell, cause) => model.beginEdit(cell, cause),
     commitEdit: async () => model.commitEdit(),
     cancelEdit: async () => model.cancelEdit(),
     insertRow: async (index, data) => model.insertRow(index, data),
@@ -480,7 +488,7 @@ export function createGridModel<TData extends Record<string, unknown>>(
       await eventBus.dispatch('cell:valueChange', { cell, oldValue, newValue: value });
     },
 
-    beginEdit(cell: CellAddress) {
+    beginEdit(cell: CellAddress, cause: EditCause = 'programmatic') {
       const rowIds = getRowIds();
       const rowIndex = rowIds.indexOf(cell.rowId);
       if (rowIndex === -1) return;
@@ -489,7 +497,7 @@ export function createGridModel<TData extends Record<string, unknown>>(
       const value = row[cell.field as keyof TData] as CellValue;
       const editingBefore = graph.read(editingNode);
       graph.commit('cell:beginEdit', (tx) =>
-        tx.set(editingNode, beginEditState(editingBefore, cell, value)),
+        tx.set(editingNode, beginEditState(editingBefore, cell, value, cause)),
       );
     },
 

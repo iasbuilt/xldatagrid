@@ -20,6 +20,7 @@ describe('createEditingState', () => {
     expect(s.currentValue).toBeNull();
     expect(s.isValid).toBe(true);
     expect(s.validationError).toBeNull();
+    expect(s.cause).toBeNull();
   });
 });
 
@@ -47,6 +48,42 @@ describe('beginEdit', () => {
   it('accepts numeric initial value', () => {
     const s = beginEdit(createEditingState(), cell, 42);
     expect(s.originalValue).toBe(42);
+  });
+
+  // Issue #133 — every begin-edit code-path threads its `cause` through
+  // so editor mount lifecycles know whether to take over input
+  // selection. `'typeToEdit'` is the only cause that opts out of
+  // `DataGridBody`'s mount-time `select()`; every other cause must
+  // keep the existing "highlight existing value so next keystroke
+  // replaces" behaviour.
+  it('defaults cause to "programmatic" when caller omits it (back-compat)', () => {
+    const s = beginEdit(createEditingState(), cell, 'x');
+    expect(s.cause).toBe('programmatic');
+  });
+
+  it('records the provided cause for typeToEdit (race-fix path)', () => {
+    const s = beginEdit(createEditingState(), cell, 'x', 'typeToEdit');
+    expect(s.cause).toBe('typeToEdit');
+  });
+
+  it('records the provided cause for dblclick', () => {
+    const s = beginEdit(createEditingState(), cell, 'x', 'dblclick');
+    expect(s.cause).toBe('dblclick');
+  });
+
+  it('records the provided cause for f2', () => {
+    const s = beginEdit(createEditingState(), cell, 'x', 'f2');
+    expect(s.cause).toBe('f2');
+  });
+
+  it('records the provided cause for enter', () => {
+    const s = beginEdit(createEditingState(), cell, 'x', 'enter');
+    expect(s.cause).toBe('enter');
+  });
+
+  it('records the provided cause for click (excel-mode)', () => {
+    const s = beginEdit(createEditingState(), cell, 'x', 'click');
+    expect(s.cause).toBe('click');
   });
 });
 
@@ -154,6 +191,16 @@ describe('cancelEdit', () => {
     expect(cancelled.cell).toBeNull();
     expect(cancelled.currentValue).toBeNull();
     expect(cancelled.originalValue).toBeNull();
+  });
+
+  // Issue #133 regression guard — without this, a cancelled
+  // `'typeToEdit'` would leak into the next edit's mount and silence
+  // the body's `select()` on (e.g.) the next dblclick.
+  it('clears the cause back to null so the next begin-edit starts fresh', () => {
+    const s = beginEdit(createEditingState(), cell, 'Alice', 'typeToEdit');
+    expect(s.cause).toBe('typeToEdit');
+    const cancelled = cancelEdit(s);
+    expect(cancelled.cause).toBeNull();
   });
 });
 

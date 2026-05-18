@@ -219,7 +219,16 @@ export function useKeyboard<TData extends Record<string, unknown>>(
       if (col && col.editable !== false && editableType) {
         e.preventDefault();
         const typedChar = e.key;
-        model.beginEdit(current);
+        // Pass cause='typeToEdit' so DataGridBody's mount-time
+        // `el.select()` knows to stay out of the way (issue #133).
+        // Before this signal, the body's deferred `select()` could
+        // fire AFTER our `setSelectionRange(len, len)` under CPU
+        // contention, which highlighted the seed character so the
+        // very next keystroke replaced it — only the LAST typed digit
+        // survived. The pre-#133 mitigation was a per-keystroke
+        // `delay: 50` in the e2e spec; this signal removes the race
+        // entirely and lets us drop the delay.
+        model.beginEdit(current, 'typeToEdit');
         requestAnimationFrame(() => {
           if (!container) return;
           const cellSel = `[role="gridcell"][data-row-id="${CSS.escape(
@@ -242,14 +251,15 @@ export function useKeyboard<TData extends Record<string, unknown>>(
           }
           input.dispatchEvent(new Event('input', { bubbles: true }));
           // Place the caret after the seeded char so continued typing
-          // appends naturally. The DataGridBody's input ref also schedules
-          // a select() in a separate rAF to fix the dblclick-then-type
-          // "append-not-replace" bug; that select() would clobber our
-          // cursor placement if it ran later. Nest in a second rAF so our
-          // setSelectionRange wins the race for the type-to-edit path.
+          // appends naturally. Issue #133 — we used to nest a second
+          // rAF here to win a race against DataGridBody's deferred
+          // `select()`; now that the body opts out on cause='typeToEdit',
+          // the call is synchronous and deterministic. Doing it sync
+          // also closes the window during which a fast keystroke could
+          // land between the rAFs and corrupt the seed.
           if (typeof input.setSelectionRange === 'function') {
             const len = typedChar.length;
-            requestAnimationFrame(() => input.setSelectionRange(len, len));
+            input.setSelectionRange(len, len);
           }
         });
         return;
@@ -318,7 +328,9 @@ export function useKeyboard<TData extends Record<string, unknown>>(
           if (isEditorTarget(e.target)) return;
           model.commitEdit();
         } else if (current) {
-          model.beginEdit(current);
+          // cause='enter' — editor mount selects existing text so a
+          // subsequent keystroke REPLACES the value (#133).
+          model.beginEdit(current, 'enter');
         }
         break;
       }
@@ -486,7 +498,9 @@ export function useKeyboard<TData extends Record<string, unknown>>(
       // --- F2: enter edit mode on the selected cell ---
       case 'F2': {
         if (current && !editing.cell) {
-          model.beginEdit(current);
+          // cause='f2' — editor mount selects existing text so a
+          // subsequent keystroke REPLACES the value (#133).
+          model.beginEdit(current, 'f2');
         }
         break;
       }

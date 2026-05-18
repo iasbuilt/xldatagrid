@@ -6,6 +6,12 @@
 import React from 'react';
 import Typography from '@mui/material/Typography';
 
+/**
+ * Props accepted by {@link DisplayTypography}. The component renders the
+ * cell's display-mode value through MUI's `<Typography variant="body2">`
+ * and falls back to the placeholder (rendered in `text.secondary`) when
+ * the value is empty.
+ */
 export interface DisplayTypographyProps {
   value: string;
   placeholder?: string;

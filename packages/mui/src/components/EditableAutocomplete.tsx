@@ -7,6 +7,12 @@ import React from 'react';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
+/**
+ * Props accepted by {@link EditableAutocomplete}. The component is a
+ * thin pass-through to MUI's `<Autocomplete>` with sensible defaults
+ * for in-cell editing (small density, no clear button, multi-select
+ * always on).
+ */
 export interface EditableAutocompleteProps<T = string> {
   multiple: true;
   freeSolo?: boolean;

@@ -458,11 +458,29 @@ export function createSelectionChecker(
   };
 }
 
+/**
+ * Resolves the address one step counter to reading order from
+ * `current` — left within the same row when a left neighbour exists,
+ * otherwise wrapping to the rightmost cell of the previous row. Returns
+ * `null` from the top-left corner, signalling "no further-back cell".
+ *
+ * Used by the Shift+Tab / reverse-direction navigation arms in
+ * `use-keyboard.ts`; the mirror of {@link getNextCellInRow}.
+ *
+ * @param current - Address of the cell that has focus today.
+ * @param columns - Full column list; the function filters to
+ *   `visible !== false` internally so callers may pass the raw config.
+ * @param rowIds - Ordered row identifiers, used to compute the
+ *   previous-row jump when wrapping.
+ */
 export function getPrevCellInRow(current: CellAddress, columns: ColumnDef<any>[], rowIds: string[]): CellAddress | null {
-  // Try moving left within the same row first
+  // Step one cell left inside the current row when possible — the
+  // common Tab-back case.
   const prev = getNextCell(current, 'left', columns, rowIds);
   if (prev) return prev;
-  // Wrap to last cell of previous row
+  // Edge case: at the leftmost visible column. Wrap to the rightmost
+  // visible cell of the row above (matching Excel's "shift-tab off
+  // column 0" behaviour). Returns null from the top-left corner.
   const rowIdx = rowIds.indexOf(current.rowId);
   const visibleCols = columns.filter(c => c.visible !== false);
   const prevRowId = rowIdx > 0 ? rowIds[rowIdx - 1] : undefined;

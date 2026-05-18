@@ -221,6 +221,33 @@ const LIGHT_THEME: CSSVariableMap = lightThemeTokens as CSSVariableMap;
 
 const DARK_THEME: CSSVariableMap = darkThemeTokens as CSSVariableMap;
 
+/**
+ * Resolves the `theme` prop passed to `<DataGrid>` (or `<MuiDataGrid>`)
+ * into a React-friendly `CSSProperties` bag of CSS-variable
+ * assignments suitable for spreading into `style={{ ... }}`.
+ *
+ * Three input shapes are accepted:
+ *
+ *   - `'light'` — returns a shallow copy of the built-in light-theme
+ *     token map so callers can layer their own per-instance overrides
+ *     on top without mutating the shared object.
+ *   - `'dark'` — same as above for the dark preset.
+ *   - `Record<string, string>` — a custom token map. Keys not matching
+ *     `--*` flow through unchanged; React DOM will emit the usual
+ *     dev-time warning for non-variable keys but does not throw.
+ *
+ * An unrecognised string preset (e.g. `'excel365'`) is intentionally
+ * resolved to `{}` because the theme tokens for that preset live in CSS
+ * and are activated by the matching `data-theme` attribute the grid
+ * writes to its root container.
+ *
+ * @param theme - The `theme` prop value supplied by the caller, or
+ *   `undefined` when no theme is requested (the grid uses its
+ *   default CSS variables).
+ * @returns A plain object suitable for spreading into a `style` prop.
+ *   Always a fresh object — never the frozen token-map constants — so
+ *   callers may mutate the result if they need to.
+ */
 export function resolveThemeStyle(
   theme: 'light' | 'dark' | Record<string, string> | undefined,
 ): React.CSSProperties {

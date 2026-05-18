@@ -53,31 +53,31 @@
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 356,
+      "line": 383,
       "column": 9
     },
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 357,
+      "line": 384,
       "column": 9
     },
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 362,
+      "line": 389,
       "column": 9
     },
     {
       "ruleId": "S-01",
       "file": "react/src/DataGrid.tsx",
-      "line": 696,
+      "line": 723,
       "column": 7
     },
     {
       "ruleId": "S-07",
       "file": "react/src/DataGrid.tsx",
-      "line": 933,
+      "line": 960,
       "column": 9
     },
     {
@@ -341,31 +341,31 @@
     {
       "ruleId": "S-07",
       "file": "react/src/header/column-filter-menu/FilterConditionDialog.tsx",
-      "line": 279,
+      "line": 287,
       "column": 9
     },
     {
       "ruleId": "S-07",
       "file": "react/src/header/column-filter-menu/FilterConditionDialog.tsx",
-      "line": 280,
+      "line": 288,
       "column": 9
     },
     {
       "ruleId": "S-07",
       "file": "react/src/header/column-filter-menu/FilterConditionDialog.tsx",
-      "line": 281,
+      "line": 289,
       "column": 9
     },
     {
       "ruleId": "S-01",
       "file": "react/src/header/column-filter-menu/FilterConditionDialog.tsx",
-      "line": 307,
+      "line": 315,
       "column": 7
     },
     {
       "ruleId": "S-01",
       "file": "react/src/header/column-filter-menu/FilterConditionDialog.tsx",
-      "line": 314,
+      "line": 322,
       "column": 5
     },
     {
@@ -389,43 +389,43 @@
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 134,
+      "line": 176,
       "column": 11
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 137,
+      "line": 179,
       "column": 39
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 150,
+      "line": 192,
       "column": 43
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 166,
+      "line": 208,
       "column": 11
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 211,
+      "line": 253,
       "column": 40
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 218,
+      "line": 260,
       "column": 11
     },
     {
       "ruleId": "S-06",
       "file": "react/src/state/use-grid-interaction.ts",
-      "line": 226,
+      "line": 268,
       "column": 11
     },
     {

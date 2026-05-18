@@ -1,28 +1,82 @@
-// ---------------------------------------------------------------------------
-// Grid Interaction State — replaces 12 individual useState calls in DataGrid
-// with a single useReducer backed by a pure reducer function.
-// ---------------------------------------------------------------------------
+/**
+ * Pure, reducer-friendly state model for every piece of transient UI
+ * interaction state the grid tracks in React.
+ *
+ * Originally the grid carried twelve individual `useState` hooks
+ * scattered across `DataGrid.tsx` (menu open / closed, drag sources,
+ * resize anchors, hidden-column sets, freeze overrides, ...); those
+ * are consolidated here into one discriminated-union state so:
+ *
+ *   - The grid's interaction layer is unit-testable as a pure
+ *     reducer (`gridInteractionReducer`).
+ *   - SPA adopters using the BYO-graph pattern can observe the
+ *     interaction node atomically alongside data / column / selection
+ *     state in a single causl commit. The `useGridInteraction` hook
+ *     wraps the reducer with optional causl persistence; see
+ *     `use-grid-interaction.ts` for the runtime adapter.
+ *   - Phase-3 follow-up (#106): the `rowGroupExpanded`, `rowDrag`,
+ *     `filterMenu`, and `conditionDialog` slices were lifted off
+ *     ad-hoc `useState` holders onto this same node so SPA-side
+ *     derivations can read them in lockstep with the rest.
+ *
+ * All sub-state types use a `type:` tag so callers can pattern-match
+ * exhaustively in TypeScript (the union narrows automatically inside a
+ * `switch`). Adding a new variant therefore surfaces as a compile
+ * error at every consumer until they handle it.
+ *
+ * @module grid-interaction-state
+ */
 
-// ---- Discriminated union types for sub-states ----
+// Discriminated union types for the individual interaction sub-states.
+// Each variant carries only the data the active branch needs (no
+// "everything optional" structs); idle/closed forms are sentinel values
+// with no payload so the reducer can free transient fields in one step.
 
+/**
+ * Column-reorder drag session. Captures the field being dragged and the
+ * field currently under the cursor (or `null` between targets) so the
+ * header can paint the drop-indicator at the right gutter.
+ */
 export type ColumnDragState =
   | { type: 'idle' }
   | { type: 'dragging'; field: string; overField: string | null };
 
+/**
+ * Same shape as {@link ColumnDragState} but keyed on column-group
+ * identifiers — drives the column-group banner's drag-to-reorder.
+ */
 export type ColumnGroupDragState =
   | { type: 'idle' }
   | { type: 'dragging'; groupId: string; overGroupId: string | null };
 
+/**
+ * Active column resize. `startX` + `startWidth` capture the pointer
+ * anchor and column-at-grab width so pointer-move deltas resolve to
+ * the new width with one subtraction. The pointer-capture set on the
+ * resize handle survives the cursor leaving the gutter cell, so this
+ * state stays `resizing` until pointer-up.
+ */
 export type ResizeState =
   | { type: 'idle' }
   | { type: 'resizing'; field: string; startX: number; startWidth: number };
 
+/**
+ * Tagged union covering every menu the grid can render. The single
+ * union ensures only one menu is open at a time without bookkeeping
+ * code: opening any variant displaces the previous one.
+ */
 export type MenuState =
   | { type: 'closed' }
   | { type: 'context'; x: number; y: number; rowId: string | null; field: string | null }
   | { type: 'column'; field: string }
   | { type: 'columnVisibility' };
 
+/**
+ * Row-reorder drag session, kicked off from the row-number chrome
+ * cell's drag handle (issue #68). `sourceIndex` is captured at the
+ * start so the drop target can compute the move delta against the
+ * current row list without a re-lookup.
+ */
 export type RowDragState =
   | { type: 'idle' }
   | { type: 'dragging'; sourceRowId: string; sourceIndex: number };
@@ -39,16 +93,37 @@ export interface FilterMenuAnchor {
   right: number;
 }
 
+/**
+ * Excel-style column filter dropdown state. `anchor` is snapshotted at
+ * open-time so the popup positioning is decoupled from the header
+ * button's layout lifecycle — the button can re-render, scroll, or
+ * detach without dragging the popup with it.
+ */
 export type FilterMenuState =
   | { type: 'closed' }
   | { type: 'open'; field: string; anchor: FilterMenuAnchor };
 
+/**
+ * Conditional-formatting / filter dialog state. Single field at a time;
+ * opening another field swaps the dialog rather than stacking.
+ */
 export type ConditionDialogState =
   | { type: 'closed' }
   | { type: 'open'; field: string };
 
-// ---- Combined state ----
+// Combined top-level state — what `useGridInteraction` returns from
+// `state` and what `gridInteractionReducer` operates over.
 
+/**
+ * Snapshot of every transient UI interaction state slice the grid
+ * tracks in React (menu open/closed, drag/resize sessions, per-column
+ * width / order / visibility / freeze overrides, expanded row groups,
+ * row drag, filter menu, condition dialog).
+ *
+ * This shape is stable across renders and serialisable — when the
+ * BYO-graph wiring is on, the entire object is the value of a causl
+ * input node.
+ */
 export interface GridInteractionState {
   menu: MenuState;
   columnDrag: ColumnDragState;
@@ -70,6 +145,11 @@ export interface GridInteractionState {
   conditionDialog: ConditionDialogState;
 }
 
+/**
+ * The grid's pre-render baseline — every menu closed, every drag idle,
+ * every override empty. The reducer treats this value as a constant
+ * sentinel; do not mutate it in place.
+ */
 export const initialGridInteractionState: GridInteractionState = {
   menu: { type: 'closed' },
   columnDrag: { type: 'idle' },
@@ -87,8 +167,17 @@ export const initialGridInteractionState: GridInteractionState = {
   conditionDialog: { type: 'closed' },
 };
 
-// ---- Action union ----
+// Action union — every mutation the reducer accepts. Pattern-matched
+// exhaustively in `gridInteractionReducer`; adding a new variant
+// surfaces as a compile error there until handled.
 
+/**
+ * Discriminated union of every action the
+ * {@link gridInteractionReducer} accepts. Action shapes are
+ * deliberately flat (no nested `payload` object) so call sites read
+ * naturally and TypeScript's literal-type narrowing applies on the
+ * `type` discriminant without extra unwrapping.
+ */
 export type GridInteractionAction =
   | { type: 'open-context-menu'; x: number; y: number; rowId: string | null; field: string | null }
   | { type: 'open-column-menu'; field: string }
@@ -125,8 +214,12 @@ export type GridInteractionAction =
   | { type: 'open-condition-dialog'; field: string }
   | { type: 'close-condition-dialog' };
 
-// ---- Helpers ----
-
+/**
+ * Pure helper: moves `from` to the slot immediately preceding `to`
+ * in a deterministic, alloc-once way. Used by the drop-column and
+ * drop-column-group actions so the reducer stays a pure function of
+ * `(state, action)`.
+ */
 function reorder(list: string[], from: string, to: string): string[] {
   const next = list.filter((item) => item !== from);
   const targetIdx = next.indexOf(to);
@@ -135,8 +228,24 @@ function reorder(list: string[], from: string, to: string): string[] {
   return next;
 }
 
-// ---- Reducer ----
-
+/**
+ * Pure reducer that drives every {@link GridInteractionState}
+ * transition.
+ *
+ * The function is **referentially honest**: identical
+ * `(state, action)` inputs always yield the same output object (no
+ * `Date.now()`, no random ids, no DOM lookups inside the reducer).
+ * That property is what `useGridInteraction` relies on when it wires
+ * the reducer into a causl input node: the same action runs through
+ * the same `tx.set(node, reducer(prev, action))` regardless of where
+ * the action originated (React event, programmatic call, time-travel
+ * replay from Redux DevTools).
+ *
+ * Unhandled action types fall through to the default branch and
+ * return state unchanged — TypeScript's exhaustiveness check warns
+ * about missing arms at compile time, so the default exists only as
+ * a runtime safety net.
+ */
 export function gridInteractionReducer(
   state: GridInteractionState,
   action: GridInteractionAction,

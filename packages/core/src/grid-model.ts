@@ -35,6 +35,13 @@ function encodeColumnState<TData>(state: ColumnState<TData>): string {
     return v;
   });
 }
+/**
+ * Inverse of {@link encodeColumnState}. Reconstructs the `Set` values
+ * the column-state shape relies on (currently `hidden`) from the
+ * sentinel-tagged envelope they were serialised as, and back-fills
+ * any missing fields with `fallback` to defend against stored
+ * envelopes from older schema versions.
+ */
 function decodeColumnState<TData>(raw: string, fallback: ColumnState<TData>): ColumnState<TData> {
   try {
     const parsed = JSON.parse(raw, (_k, v) => {
@@ -107,6 +114,39 @@ export interface GridNodes<TData = Record<string, unknown>> {
   readonly visibleColumns: DerivedNode<ColumnDef<TData>[]>;
 }
 
+/**
+ * The framework-agnostic imperative façade returned by
+ * {@link createGridModel}.
+ *
+ * Every public mutation in the grid (cell edits, sort / filter / select,
+ * row insertion, column reorders, undo / redo, sub-grid expansion,
+ * extension registration) lands here and translates into a single
+ * `graph.commit('intent', tx => ...)` against the underlying causl graph.
+ * Adopters get atomic transitions for free: subscribers see exactly one
+ * new value per user-level action, never an intermediate state.
+ *
+ * The model is **framework-agnostic** — it has zero React imports and is
+ * consumed identically by the React adapter (`useGrid`), the MUI wrapper
+ * (`MuiDataGrid`), and any future Vue / Svelte / vanilla binding.
+ *
+ * Two access patterns are supported:
+ *
+ *   - **Method-based** — call `model.setCellValue(...)`, `model.sort(...)`,
+ *     etc. for the standard imperative API. Each method internally runs
+ *     one `graph.commit` and dispatches the matching `GridEvent` through
+ *     the {@link EventBus}.
+ *   - **Graph-based (BYO-graph)** — read or layer derived nodes directly
+ *     on top of `model.graph` and `model.nodes.*`. Useful when an SPA
+ *     wants its own derived state (pivot panel, URL bar, analytics) to
+ *     land atomically alongside grid mutations. See
+ *     `playground/spa-integration/` for the canonical example.
+ *
+ * @typeParam TData - The row data shape. Defaults to a loose
+ *   `Record<string, unknown>` for adopters that don't yet model their
+ *   rows; tighten it to your row type so `setCellValue` becomes
+ *   compile-time-checked against the column field's value type
+ *   (closes #104).
+ */
 export interface GridModel<TData = Record<string, unknown>> {
   /**
    * Underlying causl graph (consumer-supplied via `config.graph` or
@@ -174,6 +214,20 @@ export interface GridModel<TData = Record<string, unknown>> {
   destroy(): Promise<void>;
 }
 
+/**
+ * Plain-object snapshot of every reactive grid state slice at a single
+ * point in time, returned by `model.getState()` and by
+ * `useGridStore(model)` in the React adapter.
+ *
+ * Each field mirrors the value of an input or derived causl node — see
+ * {@link GridNodes}. The snapshot is **immutable** by convention:
+ * mutating it does NOT update the underlying graph. Callers that want
+ * to mutate state must go through a `GridModel` method (which runs a
+ * `graph.commit` for atomicity) or compose a `tx.set(node, value)`
+ * inside their own commit when working with BYO-graph composition.
+ *
+ * @typeParam TData - Row data shape, propagated from {@link GridModel}.
+ */
 export interface GridModelState<TData = Record<string, unknown>> {
   data: TData[];
   columns: ColumnState<TData>;
@@ -190,9 +244,48 @@ export interface GridModelState<TData = Record<string, unknown>> {
   config: GridConfig<TData>;
 }
 
+/**
+ * Constructs a fresh {@link GridModel} bound to a causl graph.
+ *
+ * The factory accepts the full {@link GridConfig} adopters pass to
+ * `<DataGrid>` (or to `useGrid` in the React adapter). It is the single
+ * entry point for instantiating the grid's reactive substrate;
+ * everything downstream — including `useGrid`'s React lifecycle —
+ * delegates to this function.
+ *
+ * Two graph-ownership modes are supported:
+ *
+ *   - **Grid-owned** (default): omit `config.graph` and the factory
+ *     creates an internal graph via `createCausl()`. This is the
+ *     standalone-component path used by adopters who don't need
+ *     SPA-wide state composition.
+ *   - **BYO-graph**: pass `config.graph` and an optional
+ *     `config.graphNamespace` (defaults to `'grid'`). All grid nodes
+ *     register under `${namespace}:<slice>` so multiple grids — and
+ *     other SPA state — coexist on a single graph without id
+ *     collisions. External `graph.derived(...)` nodes that read from
+ *     `model.nodes.*` update atomically inside the same commit that
+ *     produced the grid mutation.
+ *
+ * Row identity is resolved through `config.rowKey`, which may be a
+ * string key into `TData` or a `(row) => string` function. The resolved
+ * resolver is closed over the model lifetime so row-keyed methods
+ * (`selectRowByKey`, `toggleSubGridExpansion`, ...) stay consistent
+ * even as `data` changes.
+ *
+ * @typeParam TData - Row data shape.
+ * @param config - Top-level grid configuration object — same shape
+ *   `<DataGrid>` accepts.
+ * @returns A fully-wired imperative model whose lifetime is owned by
+ *   the caller. Call `model.destroy()` on teardown.
+ */
 export function createGridModel<TData extends Record<string, unknown>>(
   config: GridConfig<TData>
 ): GridModel<TData> {
+  // Normalise the row-key resolver. Adopters may pass either a string
+  // field name (cheaper, declarative) or a function (more flexible,
+  // e.g. composite keys); the factory closes over a single resolver
+  // shape so the rest of the model never re-runs this branch.
   const resolveRowKey: RowKeyResolver<TData> = typeof config.rowKey === 'function'
     ? config.rowKey
     : (row: TData) => String(row[config.rowKey as keyof TData]);

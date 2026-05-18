@@ -1,8 +1,24 @@
+/**
+ * Optional banner row rendered above the per-column header when the
+ * grid's `columnGroups` config is non-empty. Each group spans the
+ * columns assigned to it, supports drag-to-reorder at the group
+ * granularity, and can be collapsed to hide every member column at
+ * once.
+ *
+ * @module DataGridColumnGroupHeader
+ */
 import React from 'react';
 import type { ColumnDef, ColumnGroupConfig } from '@iasbuilt/datagrid-core';
 import type { ColumnGroupDragState } from '../state';
 import * as styles from './DataGridColumnGroupHeader.styles';
 
+/**
+ * Props accepted by {@link DataGridColumnGroupHeader}. Width
+ * resolution is left to the parent: the component receives the
+ * already-ordered visible columns plus the matching `columnWidths`
+ * array so each group banner can compute its `width: sum(member
+ * column widths)` without re-walking the grid model.
+ */
 export interface DataGridColumnGroupHeaderProps {
   columnGroupConfig: ColumnGroupConfig;
   effectiveGroupOrder: string[];
@@ -17,6 +33,10 @@ export interface DataGridColumnGroupHeaderProps {
   onCollapseToggle: (groupId: string) => void;
 }
 
+/**
+ * Renders the column-group banner row. See
+ * {@link DataGridColumnGroupHeaderProps} for the per-field contract.
+ */
 export function DataGridColumnGroupHeader(props: DataGridColumnGroupHeaderProps) {
   const {
     columnGroupConfig,

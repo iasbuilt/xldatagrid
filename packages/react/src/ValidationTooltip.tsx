@@ -42,6 +42,16 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import type { ValidationResult, ValidationSeverity } from '@iasbuilt/datagrid-core';
 
+/**
+ * Props accepted by the `<ValidationTooltip>` portal.
+ *
+ * The component is intentionally pull-shaped: the caller (typically
+ * `<DataGridBody>`) computes the cell address, the ordered result list,
+ * and the `open` flag (hover / focus) and the tooltip simply renders
+ * the corresponding portal node. Closing the tooltip is a matter of
+ * passing `open={false}` — the component does not own its own
+ * open-state.
+ */
 export interface ValidationTooltipProps {
   /** Id of the row the tooltip describes. */
   rowId: string;

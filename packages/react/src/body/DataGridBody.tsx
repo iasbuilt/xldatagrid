@@ -69,10 +69,20 @@ import { GhostRow } from '../GhostRow';
 import { useHoverTooltip } from '../HoverTooltip';
 import * as styles from './DataGridBody.styles';
 
-// ---------------------------------------------------------------------------
-// Helper: format cell value for display
-// ---------------------------------------------------------------------------
+// Helper: lightweight display formatter used when no custom cell
+// renderer is registered for a given cellType. The full cell-renderer
+// pipeline kicks in when an entry exists in `cellRenderers`; this
+// fallback covers the bare-grid case so a `<DataGrid>` with no
+// `cellRenderers` prop still shows sensible defaults for the common
+// primitive types (boolean check / cross, currency with $-prefix,
+// dates via `toLocaleDateString`).
 
+/**
+ * Coerces a {@link CellValue} into the string the bare-grid path
+ * renders inside a `<td>`. Falls through to `String(value)` for
+ * unrecognised types so adopters who pass exotic shapes see at least
+ * an attempt at a sensible label rather than `[object Object]`.
+ */
 function renderCellValue(value: CellValue, cellType: CellType): string {
   if (value == null) return '';
   if (cellType === 'boolean') return value ? '\u2611' : '\u2610';
@@ -81,9 +91,9 @@ function renderCellValue(value: CellValue, cellType: CellType): string {
   return String(value);
 }
 
-// ---------------------------------------------------------------------------
-// Helper: validation key
-// ---------------------------------------------------------------------------
+// Helper: coerce inline-editor input strings back to the column's
+// storage type. See the doc-comment on `coerceCellValueForColumn`
+// for the catastrophic-drift bug this guards against.
 
 /**
  * Coerce the raw `<input>` string value into the storage type the column
@@ -112,6 +122,12 @@ function coerceCellValueForColumn(
   return raw;
 }
 
+/**
+ * Composite map key for the per-cell validation-error store. Kept
+ * standalone so the encoding lives in one place — if we ever need to
+ * escape the separator (a `:` inside a field name) or switch to a
+ * tuple-keyed `Map`, every consumer flows through this function.
+ */
 function getValidationKey(rowId: string, field: string): string {
   return `${rowId}:${field}`;
 }
@@ -187,10 +203,18 @@ function overflowStyleFor(policy: OverflowPolicy): React.CSSProperties {
  */
 const TRUNCATE_MAX_CHARS = 24;
 
-// ---------------------------------------------------------------------------
-// Helper: resolve ghost row position from config
-// ---------------------------------------------------------------------------
+// Helper: normalise the polymorphic `ghostRow` prop into a concrete
+// `GhostRowPosition`. The prop accepts `boolean | GhostRowConfig` so
+// adopters can write `ghostRow` as a shorthand for default behaviour,
+// or pass a config object when they need to override position /
+// defaults / validation; this resolver collapses both forms to a
+// single value the renderer can consume directly.
 
+/**
+ * Resolves the `ghostRow` prop to a concrete {@link GhostRowPosition}.
+ * Defaults to `'bottom'` when the prop is omitted, `true`, or supplies
+ * a config without an explicit position.
+ */
 function resolveGhostPosition<T extends Record<string, unknown> = Record<string, unknown>>(config: boolean | GhostRowConfig<T> | undefined): GhostRowPosition {
   if (typeof config === 'object' && config.position) return config.position;
   return 'bottom';
@@ -451,11 +475,22 @@ export interface DataGridBodyProps<TData extends Record<string, unknown>> {
 // The raw text itself is intentionally rendered so screen readers still read
 // it without depending on the hover tooltip.
 
+/**
+ * Props for the {@link CellTextDisplay} text-overflow renderer.
+ */
 interface CellTextDisplayProps {
   rawText: string;
   policy: OverflowPolicy;
 }
 
+/**
+ * Per-cell text-overflow renderer. Applies the requested
+ * {@link OverflowPolicy} (`truncate-end`, `truncate-middle`,
+ * `clamp-2`, `clamp-3`, `wrap`, `reveal-only`, `none`) using vendor-
+ * prefixed CSS line-clamp rules and DOM-level truncation; see the
+ * surrounding block-comment for the design rationale and the
+ * accessibility / screen-reader contract.
+ */
 function CellTextDisplay({ rawText, policy }: CellTextDisplayProps) {
   const ref = useRef<HTMLSpanElement | null>(null);
 
@@ -523,6 +558,15 @@ function CellTextDisplay({ rawText, policy }: CellTextDisplayProps) {
 // The component is intentionally generic over the row shape so the resolver
 // signature can match `ColumnDef<TData>['note']` precisely.
 
+/**
+ * Props for the {@link BodyCell} per-cell renderer.
+ *
+ * Each `<DataGridBody>` cell delegates to `<BodyCell>` so the hover-
+ * tooltip hook (`useHoverTooltip`) can live at a stable position in
+ * the rules-of-hooks ordering. The component is generic over `TData`
+ * so the column-level `note` resolver can match
+ * `ColumnDef<TData>['note']` exactly.
+ */
 interface BodyCellProps<TData> {
   col: ColumnDef<TData>;
   colIdx: number;
@@ -591,6 +635,13 @@ function isMeasuredTruncated(
   return scrollWidth > clientWidth;
 }
 
+/**
+ * Per-cell renderer extracted from `<DataGridBody>` so each cell can
+ * legally invoke React hooks (`useHoverTooltip`, the truncation
+ * `useLayoutEffect`) at a stable position in the hooks ordering.
+ * See {@link BodyCellProps} for the input contract and the block-
+ * comment above `BodyCellProps` for the rationale of the extraction.
+ */
 function BodyCell<TData extends Record<string, unknown>>(
   props: BodyCellProps<TData>,
 ) {
@@ -710,10 +761,39 @@ function BodyCell<TData extends Record<string, unknown>>(
   );
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+// Component — the load-bearing body renderer.
+//
+// `DataGridBody` is the largest single component in the package and
+// owns the most performance-sensitive code paths (per-row rendering,
+// per-cell range tinting, virtualisation slice, drag-drop overlays,
+// inline editor mount/unmount). It is split into the props object,
+// the helper closures defined above this comment, and the JSX tree
+// the function emits below.
 
+/**
+ * Body half of the grid: renders every row × column intersection
+ * inside the virtualisation window, paints range / row-selection /
+ * chrome tints, hosts the inline cell editor, dispatches click /
+ * keyboard / drag interactions to the parent `<DataGrid>`, and
+ * surfaces validation tooltips.
+ *
+ * The component is **presentational with side effects** — it owns
+ * very little local state (only the validation-tooltip hover/focus
+ * latches and a couple of refs for editor mount); every mutation goes
+ * back to the caller through the prop callbacks the parent grid
+ * supplies. The canonical state stays in the {@link GridModel}.
+ *
+ * Editor mount lifecycle: when `isEditingCell(rowId, field)` is `true`
+ * the body mounts an inline `<input>` for built-in cell types (text /
+ * numeric / currency / password). The input's `ref` callback branches
+ * on `editing.cause` from the grid model — see issue #133's race-fix
+ * for the full rationale — so `'typeToEdit'` opts out of the
+ * mount-time `el.select()` and every other cause keeps the
+ * "highlight existing value so the next keystroke replaces"
+ * behaviour.
+ *
+ * @typeParam TData - Row data shape, propagated from the parent grid.
+ */
 export function DataGridBody<TData extends Record<string, unknown>>(
   props: DataGridBodyProps<TData>,
 ) {

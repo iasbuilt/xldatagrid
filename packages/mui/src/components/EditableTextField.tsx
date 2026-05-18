@@ -6,6 +6,14 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
 
+/**
+ * Props accepted by {@link EditableTextField}. The component is a
+ * pre-configured MUI `<TextField variant="standard">` tuned for in-cell
+ * editing: no label, no underline, density to match the surrounding row
+ * height. Use the `inputSlotProps` and `htmlInputSlotProps` escape
+ * hatches for one-off overrides; for repeated patterns prefer adding a
+ * named field to the props.
+ */
 export interface EditableTextFieldProps {
   inputRef?: React.Ref<HTMLInputElement>;
   value: string;

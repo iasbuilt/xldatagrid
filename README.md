@@ -96,8 +96,9 @@ pnpm install
 
 ### End-to-end tests (Playwright)
 
-The `e2e/` directory contains Playwright specs that drive a real browser
-against the Storybook instance:
+The `e2e/` directory contains 43 Playwright specs that drive a real
+browser against the Storybook instance and the SPA-integration Vite
+playground. Highlights — the full list lives in `e2e/`:
 
 - `e2e/grid-keyboard.spec.ts` — arrow-key navigation, Enter/Tab commit,
   Escape cancel on an editable text cell.
@@ -107,6 +108,21 @@ against the Storybook instance:
 - `e2e/grid-xss.spec.ts` — hostile RichText payloads (raw HTML and
   markdown links) must not produce live `javascript:` hrefs or inline
   event handlers.
+- `e2e/issue-133-edit-cause-no-race.spec.ts` — pins every
+  `EditCause × rapid-typing` combination (dblclick / F2 / Enter /
+  click / typeToEdit) without any per-keystroke `delay` mitigation,
+  guarding the rAF race fix.
+- `e2e/edit-commit-nav.spec.ts` — Excel-365 commit-and-advance
+  contract (Enter → DOWN, Tab → RIGHT, Escape discards) across the
+  full editing story matrix.
+- `e2e/issue-71-type-to-enter-edit.spec.ts` + `e2e/type-to-edit.spec.ts`
+  — type-to-edit seeding semantics, non-printable-key guard.
+- `e2e/numeric-edit-replace-not-append.spec.ts` — the original $138,739
+  → $13,873,977,777 regression; now a tight contract test after #133.
+- `e2e/issue-107-causl-devtools-smoke.spec.ts` — Redux DevTools
+  bridge smoke test against the SPA-integration playground.
+- `e2e/spa-integration-byo-graph.spec.ts` — BYO-graph integration
+  proving external derivations land atomically with grid mutations.
 
 #### Running the suite
 
@@ -312,9 +328,19 @@ The playground is a Vite app at `playground/` with the Kitchen Sink demo:
 
 ### Storybook
 
-17 story files covering every feature:
+44 story files (29 grid feature stories + 15 MUI component reference
+stories under `stories/MuiComponents/`):
 
-- Introduction, Basic Grid, Cell Types, Chrome Columns, Column Operations, Context Menu, Editing, Extensions, Filtering, Ghost Row, Grouping, Keyboard Navigation, Kitchen Sink, Master-Detail, Selection, Sorting, Theming
+- **Grid features**: Introduction, Basic Grid, Cell Types, Cell
+  Overflow, Chrome Columns, Clipboard, Column Operations, Components,
+  Context Menu, Editable Dropdown, Editing, Excel Mode, Extensions,
+  Filtering, Formula Bar, Ghost Row, Grouping, Hover Tooltip,
+  Keyboard, Kitchen Sink, Master-Detail, Number-Format Presets, Rich
+  Text, Selection, Sorting, Sub-Grid, Theming, Transposed Grid,
+  Validation Tooltip.
+- **MUI primitives**: Accordion, Autocomplete, Box, Button, Checkbox,
+  Chip, IconButton, InputAdornment, LinearProgress, MenuItem,
+  Overview, Select, TextField, Tooltip, Typography.
 
 ### Project Structure
 
@@ -332,12 +358,25 @@ xldatagrid/
 
 ### Test Suite
 
-42 test files covering:
+**Unit + integration**: 116 vitest files (~2,070 tests). **End-to-end**:
+43 Playwright specs against Storybook + the SPA-integration playground.
 
-- **Core** (14 files): grid model, column model, sorting, filtering, selection, editing, clipboard, undo/redo, grouping, virtualization, events, plugins, transposed grid, sub-grid expansion
-- **React** (23 files): DataGrid rendering, cell types, chrome columns, ghost row, master-detail, context menu, keyboard navigation, drag-drop, theming, validation, JSON config, pivot modes, clipboard integration, column ops, selection, sort/filter, grouping, undo/redo, sub-grid, transposed grid, grid interaction state, grid store hook
-- **Extensions** (3 files): regex validation, export, cell comments
-- **MUI** (2 files): theme bridge, MUI cell renderers
+- **Core** (23 files): grid model, column model, sorting, filtering,
+  selection, editing (incl. `EditCause` race-fix contract for #133),
+  clipboard, undo/redo, grouping, virtualization, events, plugins,
+  transposed grid, sub-grid expansion, number-format presets, persistence
+  contract, search-index trie + column-index, validators, type-only
+  guards.
+- **React** (86 files): DataGrid rendering, every cell renderer, chrome
+  columns, ghost row, master-detail, context menu, keyboard navigation
+  (incl. type-to-edit + commit-and-advance), drag-drop, theming,
+  validation, JSON config, pivot modes, clipboard integration, column
+  ops, selection, sort/filter, grouping, undo/redo, sub-grid,
+  transposed grid, grid interaction state, grid store hook,
+  CauslDevtools bridge, migration-contract suite.
+- **Extensions** (3 files): regex validation, export, cell comments.
+- **MUI** (4 files): theme bridge, MUI cell renderers (incl. RichText
+  XSS + ALT+ENTER soft break).
 
 ### Tech Stack
 
@@ -368,7 +407,7 @@ xldatagrid/
 - **Filtering** — Predicate-based column filtering with configurable debounce; composite filters with AND/OR logic; operators: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `endsWith`, `between`, `isNull`, `isNotNull`
 - **Selection** — Cell, row, and range selection modes with keyboard extension (Shift/Ctrl); column/row/all selection; multi-range support
 - **Grouping** — Row grouping (single/multi-level) with aggregates (sum, avg, count, min, max) and collapsible column groups
-- **Editing** — Inline cell editing with lifecycle management (`beginEdit` / `commitEdit` / `cancelEdit`), validation (sync + regex with error/warning/info severity), and commit/cancel semantics
+- **Editing** — Inline cell editing with lifecycle management (`beginEdit(cell, cause?)` / `commitEdit` / `cancelEdit`), validation (sync + regex with error/warning/info severity), and commit/cancel semantics. The optional `cause` parameter (`'dblclick'` / `'enter'` / `'f2'` / `'click'` / `'typeToEdit'` / `'programmatic'`) lets editor mounts decide whether to take over input selection — type-to-edit owns the cursor placement; every other cause selects existing text so the next keystroke replaces (closes #133)
 - **Clipboard** — Copy, cut, and paste integration for single cells and ranges; tab-separated text and HTML table serialization; paste from spreadsheets
 - **Undo/Redo** — Command-based undo/redo stack tracking cell edits, row inserts/deletes, row moves, and batch operations; configurable max history (default 100) and auto-batching timeout (300ms)
 - **Virtualization** — Row and column virtualization for datasets of 500+ rows with smooth scrolling and configurable overscan
@@ -566,10 +605,13 @@ interface CellRendererProps<TData> {
 
 | Extension | Factory | Description |
 |-----------|---------|-------------|
-| Regex Validation | `createRegexValidation()` | Pattern-based cell validation |
-| Cell Comments | `createCellComments()` | Threaded comments on individual cells |
-| Column Resize | `createColumnResize()` | Drag-to-resize column headers |
-| Export | `createExportExtension()` | CSV, JSON, and Excel export with header/footer customization |
+| Regex Validation | `createRegexValidation()` | Pattern-based cell validation with `error` / `warning` / `info` severity. |
+| Cell Comments | `createCellComments()` | Threaded comments on individual cells. |
+| Column Resize | `createColumnResize()` | Drag-to-resize column headers with min/max clamping and pointer-capture. |
+| Export | `createExportExtension()` | CSV, JSON, and Excel export with per-extension header/footer + page-config customization. |
+| Formula Bar | `createFormulaBar()` | Excel-style formula-bar wiring: tracks the editing cell, drives `commitEdit` / `cancelEdit`, exposes `FormulaBarApi` for consumers. |
+| Excel Mode | `createExcelMode()` | One-click cell editing + Excel-style commit-and-advance; pairs with the `EditCause = 'click'` signal (`#133`). |
+| Validation Tooltip | `createValidationTooltip()` | Portalled per-cell validation tooltip with severity-coloured styling. |
 
 ### MUI Theme Bridge
 

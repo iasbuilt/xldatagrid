@@ -33,6 +33,12 @@ import {
   type FilterMenuAnchor,
 } from './grid-interaction-state';
 
+/**
+ * Configuration passed to {@link useGridInteraction}. All fields are
+ * optional; the bare-call form `useGridInteraction()` runs against an
+ * internally-constructed private graph and is the default for adopters
+ * that don't need SPA-wide state composition.
+ */
 export interface UseGridInteractionOptions {
   /**
    * Optional causl graph the hook should register its state node on.
@@ -49,6 +55,17 @@ export interface UseGridInteractionOptions {
   namespace?: string;
 }
 
+/**
+ * Return shape of {@link useGridInteraction}.
+ *
+ * The reactive `state` is the read side; `dispatch` is the generic
+ * write side; every other field is a pre-bound action creator that
+ * dispatches a single typed action against the underlying reducer.
+ *
+ * The action creators are stable across renders (memoised against the
+ * graph node), so consumers may include them in `useEffect`
+ * dependency arrays without triggering re-runs on every dispatch.
+ */
 export interface UseGridInteractionReturn {
   state: GridInteractionState;
   dispatch: (action: GridInteractionAction) => void;
@@ -85,6 +102,31 @@ export interface UseGridInteractionReturn {
   closeConditionDialog: () => void;
 }
 
+/**
+ * React hook binding the pure {@link gridInteractionReducer} to a
+ * causl input node so React components can read interaction state
+ * through `useSyncExternalStore` while SPA-side derivations on the
+ * same graph see the same atomic transitions.
+ *
+ * Behaviour:
+ *
+ *   1. On first render the hook resolves a graph: caller-supplied
+ *      `options.graph` (BYO-graph composition) or a private graph
+ *      created with `createCausl({ name: 'grid-interaction-<ns>' })`.
+ *      The choice is memoised in a ref so subsequent renders never
+ *      re-bind state to a different graph mid-flight.
+ *   2. It registers a single input node at `<namespace>:state`
+ *      (default namespace `'interaction'`) carrying the full
+ *      {@link GridInteractionState}. Multiple grids on the same
+ *      graph must pass distinct namespaces to avoid collisions.
+ *   3. Every dispatch runs `graph.commit('interaction:<action.type>',
+ *      tx => tx.set(node, reducer(prev, action)))`, so observers see
+ *      exactly one new state per action.
+ *
+ * The hook is safe to call without `options` — the default arguments
+ * preserve the pre-Phase-3 behaviour of an isolated, ephemeral
+ * interaction state.
+ */
 export function useGridInteraction(
   options: UseGridInteractionOptions = {},
 ): UseGridInteractionReturn {

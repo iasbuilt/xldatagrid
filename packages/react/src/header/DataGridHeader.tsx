@@ -173,6 +173,17 @@ interface HeaderCellProps<TData> {
   activeFilterFields?: ReadonlySet<string>;
 }
 
+/**
+ * Per-column header cell. Houses the title, sort indicator (arrow +
+ * priority badge for multi-column sorts), the filter trigger, the
+ * column-menu chevron, the resize handle, and the drop indicator for
+ * column-reorder drag.
+ *
+ * Extracted from the body of `<DataGridHeader>` so each header cell
+ * can register hooks (drag listeners, focus capture, tooltip state)
+ * at a stable position in the rules-of-hooks ordering — the same
+ * extraction pattern the body uses for `<BodyCell>`.
+ */
 function HeaderCell<TData>(props: HeaderCellProps<TData>) {
   const {
     col,

@@ -109,8 +109,10 @@ export function applySorting<T extends Record<string, unknown>>(data: T[], sort:
  * state = toggleSort(state, 'name', false);     // []
  * ```
  */
-// Toggle sort direction: null -> asc -> desc -> null
 export function toggleSort(current: SortState, field: string, multi: boolean): SortState {
+  // The three-state machine: unsorted → asc → desc → unsorted again.
+  // Single-column mode collapses other descriptors; multi-column mode
+  // preserves them so Excel-style shift-click stacking works.
   // Check if the field already has a sort descriptor
   const existing = current.find(s => s.field === field);
   if (!existing) {

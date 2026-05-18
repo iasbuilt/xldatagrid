@@ -1,22 +1,29 @@
+/**
+ * Core type definitions for the datagrid system.
+ *
+ * Every shared interface, type alias, and enumeration consumed across the
+ * datagrid packages is declared here — cell values, sort / filter / selection
+ * descriptors, column configuration, validation result shapes, grouping
+ * state, the plugin / extension contract, undo / redo commands, and the
+ * top-level {@link GridConfig} that adopters pass to instantiate a grid.
+ * Every rendering adapter and extension imports from this module to stay in
+ * lockstep with the canonical contracts and to share a single source of
+ * truth for type safety across the stack.
+ *
+ * The module is **types-only** at runtime: nothing is exported as a value
+ * (constants and helpers live in their per-feature siblings, e.g.
+ * `events.ts`, `selection.ts`, `validators.ts`). The handful of
+ * `import type` clauses below stitch together the cross-module type graph
+ * without introducing runtime cycles — `editing.ts`'s `EditCause`,
+ * `validators.ts`'s `Validator`, and so on.
+ *
+ * @module types
+ */
+
 import type { Validator } from './validators';
 import type { OverflowPolicy, RichTextOverflowMode } from './overflow';
 import type { NumberFormatSpec, SecondaryUnitSpec } from './number-format';
 import type { EditCause } from './editing';
-
-/**
- * Core type definitions for the datagrid system.
- *
- * This module declares all shared interfaces, type aliases, and enumerations used
- * across the datagrid packages — covering cell values, sorting, filtering,
- * selection, column configuration, validation, grouping, plugin/extension
- * contracts, undo/redo commands, and the top-level {@link GridConfig} that
- * consumers pass to instantiate a grid.
- *
- * Every rendering adapter and extension relies on these canonical types to
- * ensure consistent behavior and type safety throughout the stack.
- *
- * @module types
- */
 
 // ---------------------------------------------------------------------------
 // Cell value primitives
@@ -1415,6 +1422,15 @@ export type GridEventTypeBase =
   | 'subGrid:expand' | 'subGrid:collapse'
   | 'grid:mount' | 'grid:unmount' | 'grid:dataChange' | 'grid:stateChange';
 
+/**
+ * Full event-type vocabulary including the `before:` prefix used by
+ * `before`-phase hooks to subscribe to the pre-dispatch slot.
+ *
+ * Hooks registered with phase `'before'` may also subscribe to the
+ * literal `before:<base>` form to receive a separate, dedicated
+ * pre-dispatch notification — handy when an extension wants to observe
+ * cancellable events without participating in the cancellation chain.
+ */
 export type GridEventType = GridEventTypeBase | `before:${GridEventTypeBase}`;
 
 /**

@@ -7,6 +7,13 @@ import React from 'react';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 
+/**
+ * Props accepted by {@link EditableSelect}. The wrapper preconfigures
+ * the MUI Select to render flush against the cell padding and to
+ * honour the parent grid's blur-on-commit lifecycle; consumers supply
+ * only the value, the controlled-open flag, and the change/blur
+ * callbacks.
+ */
 export interface EditableSelectProps {
   value: string;
   open: boolean;

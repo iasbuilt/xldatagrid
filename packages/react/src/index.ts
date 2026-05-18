@@ -1,9 +1,51 @@
 /**
- * Public API barrel file for the `@iasbuilt/datagrid-react` package.
+ * Public entry point for `@iasbuilt/datagrid-react`.
  *
- * Re-exports all user-facing components, hooks, factory functions, type
- * aliases, and slot components so consumers can import everything from
- * a single entry point.
+ * Everything reachable from this barrel is part of the stable surface
+ * adopters may depend on; everything else under `src/` is internal and
+ * subject to change without a semver bump. Imports stay shallow:
+ *
+ * ```tsx
+ * import { DataGrid, useGrid, useGridStore } from '@iasbuilt/datagrid-react';
+ * ```
+ *
+ * Surface tour:
+ *
+ *   - **Top-level components** — `<DataGrid>` (primary grid),
+ *     `<MasterDetail>` (expandable row detail panels),
+ *     `<TransposedGrid>` (entity-per-column form-mode grid),
+ *     `<GhostRow>` (inline new-row entry).
+ *   - **Sub-components** — `<DataGridHeader>` / `<DataGridBody>` /
+ *     `<DataGridToolbar>` etc. for adopters that compose their own grid
+ *     layout.
+ *   - **Slots** — `<Toolbar>`, `<FormulaBar>`, `<StatusBar>`,
+ *     `<EmptyState>` — drop into a `<DataGrid>`'s slot props.
+ *   - **Chrome cells** — `<ChromeControlsCell>` / `<ChromeRowNumberCell>`
+ *     and their header counterparts power the optional UI chrome
+ *     columns (controls on the left, row numbers on the right).
+ *   - **Cell renderers** — `cellRendererMap`, plus standalone exports
+ *     for the renderers a typical app composes directly
+ *     (`TagsCell`, `StatusCell`, `UploadCell`,
+ *     `BooleanSelectedCell`, `PasswordConfirmCell`).
+ *   - **Compound-chip primitives** — `ColorPickerPopover`,
+ *     `applyCustomColorToPalette`, `createInMemoryPaletteAdapter`,
+ *     `normalizeHex`, `DEFAULT_THEME_COLORS`, `PALETTE_MAX` — reused
+ *     by the MUI variant and available to consumers building custom
+ *     chip-styled cells.
+ *   - **Hooks** — `useGrid(config)` (imperative model),
+ *     `useGridStore(model, selector?)` (React state binding),
+ *     `useGridInteraction({ graph?, namespace? })` (causl-backed UI
+ *     interaction state), `useGridContext()`,
+ *     `useCauslDevtools(model)` /
+ *     `useCauslDevtoolsForGraph(graph)` (Redux DevTools bridge),
+ *     `useDragDrop`, and the shared cell-editor hooks under
+ *     `cells/hooks`.
+ *   - **Theme tokens** — `LIGHT_THEME` / `DARK_THEME` /
+ *     `lightThemeTokens` / `darkThemeTokens` /
+ *     `toDatagridThemeTokens`, plus `resolveThemeStyle` to flatten
+ *     a `theme` prop into a CSS-variable map.
+ *   - **Migration helpers** — `htmlToMarkdown` for adopters moving
+ *     off the legacy HTML-backed RichTextCell.
  *
  * @module index
  */

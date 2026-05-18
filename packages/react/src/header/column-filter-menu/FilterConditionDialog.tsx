@@ -79,6 +79,14 @@ interface OperatorOption {
   between?: boolean;
 }
 
+// Operator vocabularies — three flavours keyed by the column's data
+// kind. Each option carries a human-readable label, the canonical
+// `FilterOperator` token consumed by the core filtering engine, and
+// per-operator UI flags (`noValue` hides the value input,
+// `between` reveals the second-value input). Order is deliberate:
+// the most common operators come first so the dropdown is fast to
+// scan with the keyboard.
+
 const TEXT_OPERATORS: OperatorOption[] = [
   { label: 'equals', operator: 'eq' },
   { label: 'does not equal', operator: 'neq' },

@@ -788,6 +788,16 @@ function writeRangeToClipboard(
   clipboard?.writeText?.(tsv);
 }
 
+/**
+ * Normalises a `{ anchor, focus }` range pair into the contiguous
+ * row-id and field-id arrays the clipboard copy / cut paths iterate.
+ *
+ * The anchor / focus shape mirrors selection state: anchor is the
+ * cell where the user pressed mouse-down (or began a shift-select);
+ * focus is where the cursor currently is. The two may sit in any
+ * order, so this helper resolves the bounding-box min/max for both
+ * axes and slices the column / row lists accordingly.
+ */
 function resolveRangeIndices(
   range: { anchor: CellAddress; focus: CellAddress },
   columns: ColumnDef[],

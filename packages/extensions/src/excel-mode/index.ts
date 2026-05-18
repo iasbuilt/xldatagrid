@@ -98,7 +98,10 @@ export function createExcelMode(
           // On cell click, begin editing immediately in excel mode
           const { cell } = event.payload as { cell: CellAddress };
           if (cell) {
-            ctx.commands.beginEdit(cell);
+            // cause='click' — excel-mode opts cells into edit on
+            // single-click. Editor mount selects existing text so a
+            // subsequent keystroke REPLACES the value (#133).
+            ctx.commands.beginEdit(cell, 'click');
           }
         },
       },

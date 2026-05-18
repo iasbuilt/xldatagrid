@@ -13,6 +13,27 @@ import { CellAddress, CellValue, ColumnDef, ValidationResult } from './types';
 import { runValidators } from './validators';
 
 /**
+ * How an edit session was started. The cause flows through `beginEdit` so
+ * editor mount lifecycles can decide whether to take over the input
+ * selection (e.g. dblclick / F2 / Enter / programmatic want a `select()`
+ * call to highlight the existing text) or stay out of the way (e.g.
+ * type-to-edit owns the cursor placement because it seeds a character).
+ *
+ * Closes iasbuilt/xldatagrid#133 — the flaky
+ * `e2e/numeric-edit-replace-not-append.spec.ts` race was rooted in
+ * `DataGridBody`'s mount-time `select()` not knowing which path opened the
+ * editor; it would clobber `use-keyboard`'s type-to-edit cursor placement
+ * under CPU contention.
+ */
+export type EditCause =
+  | 'dblclick'
+  | 'enter'
+  | 'f2'
+  | 'click'
+  | 'typeToEdit'
+  | 'programmatic';
+
+/**
  * Captures the full state of an in-progress cell edit.
  *
  * @remarks
@@ -30,6 +51,14 @@ export interface EditingState {
   isValid: boolean;
   /** Detailed validation result, or `null` when validation passes. */
   validationError: ValidationResult | null;
+  /**
+   * How the edit was initiated. `null` when no edit is active. Editor
+   * implementations branch on this to decide whether to grab the input
+   * selection on mount; see {@link EditCause}. Defaults to
+   * `'programmatic'` when callers do not provide one (back-compat with
+   * pre-#133 `beginEdit(cell)` signatures).
+   */
+  cause: EditCause | null;
 }
 
 /**
@@ -38,7 +67,14 @@ export interface EditingState {
  * @returns A fresh {@link EditingState} ready for use.
  */
 export function createEditingState(): EditingState {
-  return { cell: null, originalValue: null, currentValue: null, isValid: true, validationError: null };
+  return {
+    cell: null,
+    originalValue: null,
+    currentValue: null,
+    isValid: true,
+    validationError: null,
+    cause: null,
+  };
 }
 
 /**
@@ -50,10 +86,28 @@ export function createEditingState(): EditingState {
  * @param state - Current editing state (ignored; a new state is produced).
  * @param cell - The address of the cell to edit.
  * @param value - The cell's current value, which becomes both `originalValue` and `currentValue`.
+ * @param cause - How the edit was initiated. Editor mounts read this to
+ *   decide whether to take over input selection. Defaults to
+ *   `'programmatic'` so callers that haven't been threaded yet keep the
+ *   pre-#133 mount-time `select()` behaviour (which is correct for
+ *   dblclick / F2 / Enter / programmatic — only `typeToEdit` needed to
+ *   opt out).
  * @returns A new {@link EditingState} representing an active edit on `cell`.
  */
-export function beginEdit(state: EditingState, cell: CellAddress, value: CellValue): EditingState {
-  return { cell, originalValue: value, currentValue: value, isValid: true, validationError: null };
+export function beginEdit(
+  state: EditingState,
+  cell: CellAddress,
+  value: CellValue,
+  cause: EditCause = 'programmatic',
+): EditingState {
+  return {
+    cell,
+    originalValue: value,
+    currentValue: value,
+    isValid: true,
+    validationError: null,
+    cause,
+  };
 }
 
 /**

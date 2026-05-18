@@ -1,0 +1,104 @@
+name: Release Verify
+
+on:
+  push:
+    branches: [ release ]
+  pull_request:
+    branches: [ release ]
+  # Manual hatch so any branch can request the full suite (e.g. before
+  # opening a release PR, or to re-run after flake).
+  workflow_dispatch:
+
+# Full pre-publish verification gate. This workflow runs the entire
+# heavy suite — every check that `.husky/pre-commit` runs locally, plus
+# everything previously gated on `main` pull requests. The split with
+# `.github/workflows/ci.yml` is intentional:
+#
+#   * `ci.yml` (main)            → cheap "does it compile + lint" only.
+#   * `release-verify.yml` (this) → the pre-publish merge-gate.
+#   * `e2e.yml` (release)        → Playwright + Chromatic visual regression.
+#
+# Branch protection on `release` should require this workflow's
+# `verify (22.x)` job plus `lint-workflows`, plus the `e2e` and
+# `visual` jobs from `e2e.yml`. The pre-commit hook keeps developers
+# honest between release cuts; this workflow is the unconditional
+# backstop before code ships.
+#
+# Parity rule: if you add a step to `.husky/pre-commit`, add it here.
+# If you add a step here, add it to the hook. The hook header documents
+# the same contract from the other direction.
+#
+# Steps in the `verify` job:
+#   * `pnpm run typecheck`    — TypeScript build-mode check across packages.
+#   * `pnpm run build`        — tsup / Vite per-package build.
+#   * `pnpm test`             — vitest unit + component suites.
+#   * `pnpm tokens:check`     — fails if `packages/react/src/styles/tokens/`
+#     has drifted from the SHA-256 `contentHash` recorded in
+#     `manifest.json`. Developers who forget `pnpm sync:tokens` get a red
+#     PR instead of stale palettes shipping silently.
+#   * `pnpm run test:scripts` — script-level tests (Node's built-in test
+#     runner) covering the sync-tokens CLI surface.
+#   * `pnpm lint`             — ESLint flat-config sweep.
+#   * `pnpm lint:migration`   — `@causl/migration-check` drift guard.
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Type check
+      run: pnpm run typecheck
+
+    - name: Build all packages
+      run: pnpm run build
+
+    - name: Run tests
+      run: pnpm test
+
+    - name: Tokens drift check
+      run: pnpm tokens:check
+
+    - name: Run script tests
+      run: pnpm run test:scripts
+
+    - name: Lint
+      run: pnpm lint
+
+    - name: Causl migration drift check
+      run: pnpm lint:migration
+
+  # actionlint is duplicated here so `release` branch protection has a
+  # single workflow to require for the full suite. The `ci.yml` copy
+  # still runs on `main` for fast feedback.
+  lint-workflows:
+    name: lint-workflows
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download actionlint
+      id: actionlint
+      run: |
+        bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12
+        echo "actionlint=$(pwd)/actionlint" >> "$GITHUB_OUTPUT"
+
+    - name: Run actionlint on all workflow files
+      run: ${{ steps.actionlint.outputs.actionlint }} -color .github/workflows/*.yml

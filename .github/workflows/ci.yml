@@ -6,54 +6,35 @@ on:
   pull_request:
     branches: [ main ]
 
-# Full parity contract with `.husky/pre-commit`: every step in the
-# `verify-precommit-parity` job below has a matching local step in the
-# pre-commit hook, AND every step the hook runs is reflected here. The
-# `lint-workflows` job is similarly mirrored locally as a conditional
-# actionlint step in the hook (skipped only when the binary is not on
-# PATH; the CI job is the unconditional backstop).
+# Fast-feedback CI for `main`. Per the contract:
+#   * `main` push + PRs targeting `main` only re-run the cheap checks —
+#     "does it compile/build" + "is linting clean".
+#   * The FULL verification suite (typecheck, tests, tokens drift,
+#     script tests, Playwright E2E, Chromatic visual regression,
+#     actionlint, etc.) is gated on the `release` branch via
+#     `.github/workflows/release-verify.yml` and `.github/workflows/e2e.yml`.
 #
-# Why full parity matters: a green local hook is treated as
-# authoritative — sufficient to merge even when the remote run is red —
-# because parity guarantees the remote can only be running checks the
-# hook already covered. If you add a check here, ALSO add it to the
-# hook. If you add a check to the hook, ALSO add it here.
+# The safety net for `main`:
+#   1. `.husky/pre-commit` runs the full heavy suite locally on every
+#      commit — typecheck, build, test, tokens drift, script tests,
+#      lint, lint:migration, and `actionlint` if installed. See the hook
+#      header for the parity contract.
+#   2. `.husky/pre-push` runs Playwright E2E locally before any push.
+#   3. The `release-verify` workflow re-runs everything as the publish
+#      gate before code ships.
 #
-# This makes `git commit --no-verify` useless in practice: CI re-runs
-# the same checks on every PR and every push to protected branches, so
-# bypassing the hook only delays the failure.
-#
-# The job is intended to be a REQUIRED status check in branch protection
-# rules for `main`. Configure that via the GitHub repo settings:
-#   Settings -> Branches -> Branch protection rules -> main ->
-#   "Require status checks to pass before merging" and select
-#   `verify-precommit-parity / verify`.
-#
-# NOTE: E2E (Playwright) lives in `.github/workflows/e2e.yml` and is
-# only triggered on pushes / PRs to the `release` branch. Regular `main`
-# PRs rely on the `.husky/pre-push` hook for local E2E coverage, which
-# keeps merge latency low while still guarding the release cut.
-#
-# Steps in this job:
-#   * `pnpm run typecheck`  — TypeScript build-mode check across packages.
-#   * `pnpm run build`      — tsup / Vite per-package build.
-#   * `pnpm test`           — vitest unit + component suites.
-#   * `pnpm tokens:check`   — fails if `packages/react/src/styles/tokens/`
-#     has drifted from the SHA-256 `contentHash` recorded in
-#     `manifest.json`. Developers who forget `pnpm sync:tokens` get a red
-#     PR instead of stale palettes shipping silently.
-#   * `pnpm run test:scripts` — script-level tests (Node's built-in test
-#     runner) covering the sync-tokens CLI surface.
-#   * `pnpm lint`             — ESLint flat-config sweep across packages,
-#     playground, e2e specs, stories, and root config. Failing the build on
-#     errors is what closes issue #101's "lint scope decision" half. The
-#     `eslint.config.mjs` header documents the scope decision in full.
-#   * `pnpm lint:migration`   — `@causl/migration-check` against the full
-#     `packages/` tree, with a curated baseline subtracted. Closes the
-#     `causljs-migration-check` half of issue #101.
+# If a check belongs in the "compile/build/lint" bucket, add it here AND
+# to `release-verify.yml`. If a check belongs in the heavy bucket, only
+# add it to `release-verify.yml`. The pre-commit hook is the local
+# source of truth for the full suite; keep it a strict superset.
 jobs:
-  verify-precommit-parity:
-    name: verify
+  # Fast remote checks for `main` PRs. Renamed from
+  # `verify-precommit-parity / verify` to make the new contract
+  # obvious: this no longer mirrors pre-commit, it is a strict subset.
+  # Branch protection on `main` should require `build-lint (22.x)` and
+  # `lint-workflows`; everything else moves to the release gate.
+  build-lint:
+    name: build-lint
     runs-on: ubuntu-latest
 
     strategy:
@@ -75,40 +56,23 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
-    # Pre-commit-hook parity: the three commands below MUST stay in sync
-    # with `.husky/pre-commit`. If you change one, change the other.
-    - name: Type check (pre-commit parity)
-      run: pnpm run typecheck
-
-    - name: Build all packages (pre-commit parity)
+    # "Does it compile/build" — tsup / Vite per-package build across the
+    # workspace. Cheap and catches the vast majority of merge-time
+    # breakage without re-running the full unit-test suite.
+    - name: Build all packages
       run: pnpm run build
-
-    - name: Run tests (pre-commit parity)
-      run: pnpm test
-
-    # Drift guard for design tokens. Fails if committed tokens no longer
-    # match the manifest `contentHash`, i.e. someone hand-edited a token
-    # file or forgot to re-run `pnpm sync:tokens` after bumping the
-    # sibling `iasbuilt/tokens` repo.
-    - name: Tokens drift check
-      run: pnpm tokens:check
-
-    # Script-level tests (node --test) covering sync-tokens.mjs itself.
-    - name: Run script tests
-      run: pnpm run test:scripts
 
     # ESLint (flat config) across packages, playground, e2e, and stories.
     # Issue #101: this is the gate that keeps the lint-scope decision
     # honest — adding a new package or untyped binding fails the build.
-    - name: Lint (pre-commit parity)
+    - name: Lint
       run: pnpm lint
 
     # `@causl/migration-check` against the full `packages/` tree, with a
     # curated baseline subtracted (`scripts/causl-migration-baseline.json`).
-    # Issue #101: replaces the previous `packages/core`-only scope with a
-    # full sweep; the wrapper script in `scripts/causl-migration-check.mjs`
-    # documents the baseline contract.
-    - name: Causl migration drift check (pre-commit parity)
+    # Kept on the fast path because it is a lint-class drift guard and
+    # finishes in seconds.
+    - name: Causl migration drift check
       run: pnpm lint:migration
 
   # YAML-lint guard for GitHub Actions workflows. `actionlint` statically
@@ -119,8 +83,8 @@ jobs:
   # CI on the next push.
   #
   # The step pattern-matches `.github/workflows/*.yml` so any workflow
-  # added later (e.g. `e2e.yml` from the Playwright/Chromatic wave) is
-  # linted automatically without this file needing to be touched again.
+  # added later is linted automatically without this file needing to be
+  # touched again.
   #
   # actionlint is not distributed as a GitHub Action; the upstream
   # project recommends downloading the pinned binary via the

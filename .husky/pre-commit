@@ -1,21 +1,26 @@
 #!/usr/bin/env sh
-# Pre-commit gate: full local mirror of every check the GitHub `CI`
-# workflow runs on `main` PRs. Keeping the local hook a strict superset
-# (or equal) of remote CI means a green local hook is treated as
-# authoritative — a green local run is sufficient to merge even if the
-# remote run is red, because the remote can only be running checks the
-# hook already covered.
+# Pre-commit gate: full local mirror of every check the GitHub
+# `release-verify` workflow runs against the `release` branch. The
+# `main` workflow (`.github/workflows/ci.yml`) only re-runs the cheap
+# subset (build + lint), so this hook is the local safety net that
+# guarantees `main` does not drift from the publish gate between
+# release cuts.
 #
-# Mirrors `.github/workflows/ci.yml` jobs:
-#   verify-precommit-parity / verify
-#     - typecheck   (pnpm run typecheck)
-#     - build       (pnpm run build)
-#     - tests       (pnpm test)
-#     - tokens drift guard  (pnpm tokens:check)
-#     - script-level tests  (pnpm run test:scripts)
-#     - lint        (pnpm lint)                  # added in #101
-#     - migration drift  (pnpm lint:migration)   # added in #101
-#   lint-workflows / lint-workflows
+# A green local hook is treated as authoritative — sufficient to merge
+# even if the (lightweight) remote `main` run is red — because parity
+# guarantees the local run is a strict superset of what the remote can
+# possibly check.
+#
+# Mirrors `.github/workflows/release-verify.yml` jobs:
+#   verify
+#     - typecheck             (pnpm run typecheck)
+#     - build                 (pnpm run build)
+#     - tests                 (pnpm test)
+#     - tokens drift guard    (pnpm tokens:check)
+#     - script-level tests    (pnpm run test:scripts)
+#     - lint                  (pnpm lint)
+#     - causl migration drift (pnpm lint:migration)
+#   lint-workflows
 #     - actionlint on .github/workflows/*.yml
 #       Run locally only when actionlint is on PATH; otherwise warn so
 #       devs who haven't installed it aren't blocked, but the CI job
@@ -25,8 +30,9 @@
 # `e2e.yml` workflow — too slow to run on every commit.
 #
 # Skip locally with `git commit --no-verify` only for WIP commits that
-# will be squashed before push. CI re-runs every check on the remote
-# anyway, so bypassing the hook only delays the failure.
+# will be squashed before push. The `release-verify` workflow re-runs
+# every check on the remote anyway, so bypassing the hook only delays
+# the failure until you open a release PR.
 
 set -e
 
